@@ -313,21 +313,20 @@ fn multiple_stream_zero_hop_test() {
             .chain(chain_name_from_id(cluster.chain_id))
             .build(),
     );
+
     let mut one_client = zero_hop_node.make_client(8080);
-    let mut another_client = zero_hop_node.make_client(8080);
-
     one_client.send_chunk(b"GET / HTTP/1.1\r\nHost: www.example.com\r\n\r\n");
-    another_client.send_chunk(b"GET / HTTP/1.1\r\nHost: www.fallingfalling.com\r\n\r\n");
-
     let one_response = one_client.wait_for_chunk();
-    let another_response = another_client.wait_for_chunk();
-
     assert_eq!(
         index_of(&one_response, &b"<h1>Example Domain</h1>"[..]).is_some(),
         true,
         "Actual response:\n{}",
         String::from_utf8(one_response).unwrap()
     );
+
+    let mut another_client = zero_hop_node.make_client(8080);
+    another_client.send_chunk(b"GET / HTTP/1.1\r\nHost: www.fallingfalling.com\r\n\r\n");
+    let another_response = another_client.wait_for_chunk();
     assert_eq!(
         index_of(
             &another_response,
@@ -338,4 +337,5 @@ fn multiple_stream_zero_hop_test() {
         "Actual response:\n{}",
         String::from_utf8(another_response).unwrap()
     );
+
 }
