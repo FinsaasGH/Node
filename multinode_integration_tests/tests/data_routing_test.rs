@@ -337,5 +337,4 @@ fn multiple_stream_zero_hop_test() {
         "Actual response:\n{}",
         String::from_utf8(another_response).unwrap()
     );
-
 }
