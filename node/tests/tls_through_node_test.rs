@@ -22,8 +22,8 @@ fn tls_through_node_integration() {
         let stream = TcpStream::connect(SocketAddr::from_str("127.0.0.1:443").unwrap())
             .expect("Could not connect to 127.0.0.1:443");
         stream
-            .set_read_timeout(Some(Duration::from_millis(200)))
-            .expect("Could not set read timeout to 200ms");
+            .set_read_timeout(Some(Duration::from_millis(700)))
+            .expect("Could not set read timeout to 700ms");
         let connector = TlsConnector::new().expect("Could not build TlsConnector");
         match connector.connect(
             "example.com",
@@ -33,7 +33,7 @@ fn tls_through_node_integration() {
                 tls_stream = Some(s);
             }
             Err(HandshakeError::WouldBlock(interrupted_stream)) => {
-                thread::sleep(Duration::from_millis(100));
+                thread::sleep(Duration::from_millis(500));
                 match interrupted_stream.handshake() {
                     Ok(stream) => tls_stream = Some(stream),
                     Err(e) => {
