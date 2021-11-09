@@ -1405,7 +1405,7 @@ mod tests {
                 &mut inner.talker_half.stream,
                 &OwnedMessage::Text("booga".to_string()),
             );
-            thread::sleep(Duration::from_millis(500));
+            thread::sleep(Duration::from_millis(900));
         }
 
         inner = ConnectionManagerThread::handle_outgoing_message_body(
@@ -1420,7 +1420,7 @@ mod tests {
             )),
         );
 
-        let _ = daemon_stop_handle.stop();
+        daemon_stop_handle.kill();
         assert_eq!(conversation1_rx.try_recv(), Err(TryRecvError::Empty)); // Wasn't waiting
         assert_eq!(
             conversation2_rx.try_recv(),
