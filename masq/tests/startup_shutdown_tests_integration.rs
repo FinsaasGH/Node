@@ -101,7 +101,7 @@ fn handles_startup_and_shutdown_integration() {
     let daemon_handle = DaemonProcess::new().start(port);
     thread::sleep(Duration::from_millis(500));
 
-    let masq_handle = MasqProcess::new().start_noninteractive(vec![
+    let masq_handle1 = MasqProcess::new().start_noninteractive(vec![
         "--ui-port",
         &port.to_string(),
         "setup",
@@ -113,7 +113,7 @@ fn handles_startup_and_shutdown_integration() {
         dir_path.to_str().unwrap(),
     ]);
 
-    let (stdout, stderr, exit_code) = masq_handle.stop();
+    let (stdout, stderr, exit_code) = masq_handle1.stop();
 
     assert_eq!(&stderr, "", "setup phase: {}", stderr);
     assert_eq!(
@@ -124,10 +124,10 @@ fn handles_startup_and_shutdown_integration() {
     );
     assert_eq!(exit_code.unwrap(), 0);
 
-    let masq_handle =
+    let masq_handle2 =
         MasqProcess::new().start_noninteractive(vec!["--ui-port", &port.to_string(), "start"]);
 
-    let (stdout, stderr, exit_code) = masq_handle.stop();
+    let (stdout, stderr, exit_code) = masq_handle2.stop();
 
     assert_eq!(&stderr, "", "start phase: {}", stderr);
     assert_eq!(
@@ -138,12 +138,12 @@ fn handles_startup_and_shutdown_integration() {
     );
     assert_eq!(exit_code.unwrap(), 0);
 
-    let masq_handle =
+    let masq_handle3 =
         MasqProcess::new().start_noninteractive(vec!["--ui-port", &port.to_string(), "shutdown"]);
 
-    let (stdout, stderr, exit_code) = masq_handle.stop();
+    let (stdout, stderr, exit_code) = masq_handle3.stop();
 
-    assert_eq!(&stderr, "", "shutdown phase: {}", stderr);
+    assert_eq!(&stderr, "", "{}", stderr);
     assert_eq!(
         stdout.contains("MASQNode was instructed to shut down and has broken its connection"),
         true,
