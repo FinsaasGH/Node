@@ -40,16 +40,13 @@ use crate::sub_lib::stream_key::StreamKey;
 use crate::sub_lib::ttl_hashmap::TtlHashMap;
 use crate::sub_lib::utils::NODE_MAILBOX_CAPACITY;
 use crate::sub_lib::wallet::Wallet;
-use actix::Actor;
-use actix::Addr;
-use actix::Context;
-use actix::Handler;
-use actix::Recipient;
+
 use pretty_hex::PrettyHex;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::rc::Rc;
 use std::time::Duration;
+use actix::{Actor, Addr, Context, Handler, Recipient};
 use tokio::prelude::Future;
 
 pub const CRASH_KEY: &str = "PROXYSERVER";
@@ -532,7 +529,7 @@ impl ProxyServer {
                                 Err(e) => {
                                     error!(
                                         logger,
-                                        "Neighborhood refused to answer route request: {}", e
+                                        "Neighborhood refused to answer route request: {:?}", e
                                     );
                                 }
                             };

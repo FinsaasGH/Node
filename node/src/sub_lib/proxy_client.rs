@@ -34,6 +34,7 @@ pub struct ClientResponsePayload_0v1 {
 }
 
 #[derive(Message, Clone, Debug, PartialEq, Deserialize, Serialize)]
+
 #[allow(non_camel_case_types)]
 pub struct DnsResolveFailure_0v1 {
     pub stream_key: StreamKey,
@@ -91,6 +92,7 @@ impl ClientResponsePayload_0v1 {
 }
 
 #[derive(PartialEq, Clone, Message, Debug)]
+
 pub struct InboundServerData {
     pub stream_key: StreamKey,
     pub last_data: bool,

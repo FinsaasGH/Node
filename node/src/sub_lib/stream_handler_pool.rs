@@ -4,6 +4,7 @@ use crate::sub_lib::neighborhood::NodeQueryResponseMetadata;
 use actix::Message;
 
 #[derive(PartialEq, Debug, Message, Clone)]
+
 pub struct TransmitDataMsg {
     pub endpoint: Endpoint,
     pub last_data: bool,
@@ -12,6 +13,7 @@ pub struct TransmitDataMsg {
 }
 
 #[derive(Message, Clone)]
+
 pub struct DispatcherNodeQueryResponse {
     pub result: Option<NodeQueryResponseMetadata>,
     pub context: TransmitDataMsg,

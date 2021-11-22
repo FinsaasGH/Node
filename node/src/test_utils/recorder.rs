@@ -547,6 +547,7 @@ mod tests {
     use actix::System;
 
     #[derive(Debug, PartialEq, Message)]
+
     struct FirstMessageType {
         string: String,
     }
@@ -554,6 +555,7 @@ mod tests {
     recorder_message_handler!(FirstMessageType);
 
     #[derive(Debug, PartialEq, Message)]
+
     struct SecondMessageType {
         size: usize,
         flag: bool,

@@ -30,6 +30,7 @@ const TRANSACTION_LITERAL: H256 = H256 {
 const TRANSFER_METHOD_ID: [u8; 4] = [0xa9, 0x05, 0x9c, 0xbb];
 
 #[derive(Clone, Debug, Eq, Message, PartialEq)]
+
 pub struct Transaction {
     pub block_number: u64,
     pub from: Wallet,

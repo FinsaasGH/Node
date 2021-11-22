@@ -89,6 +89,7 @@ pub trait Launcher {
 }
 
 #[derive(Message, PartialEq, Clone)]
+
 pub struct DaemonBindMessage {
     pub to_ui_message_recipient: Recipient<NodeToUiMessage>, // for everybody to send UI-bound messages to
     pub from_ui_message_recipient: Recipient<NodeFromUiMessage>, // for the WebsocketSupervisor to send inbound UI messages to the UiGateway

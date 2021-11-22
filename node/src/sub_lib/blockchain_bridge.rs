@@ -42,12 +42,14 @@ impl Message for ReportAccountsPayable {
 }
 
 #[derive(Clone, PartialEq, Debug, Message)]
+
 pub struct SetDbPasswordMsg {
     pub client_id: u64,
     pub password: String,
 }
 
 #[derive(Clone, PartialEq, Debug, Message)]
+
 pub struct SetGasPriceMsg {
     pub client_id: u64,
     pub gas_price: String,

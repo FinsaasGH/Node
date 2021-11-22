@@ -231,8 +231,8 @@ impl Runner for RunnerReal {
             System::current().stop_with_code(1);
         }));
         match system.run() {
-            0 => Ok(()),
-            num_e => Err(RunnerError::Numeric(num_e)),
+            Ok(_) => Ok(()),
+            Err(_) => return Err(RunnerError::Numeric(1))
         }
     }
 

@@ -128,6 +128,7 @@ pub struct ClusteredParams {
 
 #[cfg(test)]
 mod tests {
+    use std::ptr::addr_of;
     use crate::daemon::daemon_initializer::{
         DaemonInitializerReal, RecipientsFactoryReal, RerunnerReal,
     };

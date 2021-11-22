@@ -44,7 +44,7 @@ use crate::sub_lib::ui_gateway::UiGatewayConfig;
 use crate::sub_lib::ui_gateway::UiGatewaySubs;
 use actix::Addr;
 use actix::Recipient;
-use actix::{Actor, Arbiter};
+use actix::prelude::Actor;
 use crossbeam_channel::{unbounded, Sender};
 use masq_lib::blockchains::chains::Chain;
 use masq_lib::ui_gateway::NodeFromUiMessage;
@@ -252,7 +252,7 @@ impl ActorFactory for ActorFactoryReal {
     ) -> (DispatcherSubs, Recipient<PoolBindMessage>) {
         let crash_point = config.crash_point;
         let descriptor = config.node_descriptor_opt.clone();
-        let addr: Addr<Dispatcher> = Arbiter::start(move |_| {
+        let addr: Addr<Dispatcher> = Actor::create(move |_| {
             Dispatcher::new(crash_point, descriptor.expect_v("node descriptor"))
         });
         (
@@ -268,7 +268,7 @@ impl ActorFactory for ActorFactoryReal {
         is_decentralized: bool,
         consuming_wallet_balance: Option<i64>,
     ) -> ProxyServerSubs {
-        let addr: Addr<ProxyServer> = Arbiter::start(move |_| {
+        let addr: Addr<ProxyServer> = Actor::create(move |_| {
             ProxyServer::new(
                 main_cryptde,
                 alias_cryptde,
@@ -280,7 +280,7 @@ impl ActorFactory for ActorFactoryReal {
     }
 
     fn make_and_start_hopper(&self, config: HopperConfig) -> HopperSubs {
-        let addr: Addr<Hopper> = Arbiter::start(|_| Hopper::new(config));
+        let addr: Addr<Hopper> = Actor::create(|_| Hopper::new(config));
         Hopper::make_subs_from(&addr)
     }
 
@@ -291,7 +291,7 @@ impl ActorFactory for ActorFactoryReal {
     ) -> NeighborhoodSubs {
         let config_clone = config.clone();
         let addr: Addr<Neighborhood> =
-            Arbiter::start(move |_| Neighborhood::new(cryptde, &config_clone));
+            Actor::create(move |_| Neighborhood::new(cryptde, &config_clone));
         Neighborhood::make_subs_from(&addr)
     }
 
@@ -318,7 +318,7 @@ impl ActorFactory for ActorFactoryReal {
         ));
         let config_dao_factory =
             DaoFactoryReal::new(data_directory, config.blockchain_bridge_config.chain, false);
-        let addr: Addr<Accountant> = Arbiter::start(move |_| {
+        let addr: Addr<Accountant> = Actor::create(move |_| {
             Accountant::new(
                 &cloned_config,
                 Box::new(payable_dao_factory),
@@ -332,7 +332,7 @@ impl ActorFactory for ActorFactoryReal {
 
     fn make_and_start_ui_gateway(&self, config: UiGatewayConfig) -> UiGatewaySubs {
         let ui_gateway = UiGateway::new(&config);
-        let addr: Addr<UiGateway> = Arbiter::start(|_| ui_gateway);
+        let addr: Addr<UiGateway> = Actor::create(|_| ui_gateway);
         UiGateway::make_subs_from(&addr)
     }
 
@@ -341,12 +341,12 @@ impl ActorFactory for ActorFactoryReal {
         clandestine_discriminator_factories: Vec<Box<dyn DiscriminatorFactory>>,
     ) -> StreamHandlerPoolSubs {
         let addr: Addr<StreamHandlerPool> =
-            Arbiter::start(|_| StreamHandlerPool::new(clandestine_discriminator_factories));
+            Actor::create(|_| StreamHandlerPool::new(clandestine_discriminator_factories));
         StreamHandlerPool::make_subs_from(&addr)
     }
 
     fn make_and_start_proxy_client(&self, config: ProxyClientConfig) -> ProxyClientSubs {
-        let addr: Addr<ProxyClient> = Arbiter::start(|_| ProxyClient::new(config));
+        let addr: Addr<ProxyClient> = Actor::create(|_| ProxyClient::new(config));
         ProxyClient::make_subs_from(&addr)
     }
 

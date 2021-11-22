@@ -544,7 +544,7 @@ mod tests {
         actix::run(move || {
             subject.process_package(payload, paying_wallet);
             ok(())
-        })
+        });
     }
 
     #[test]

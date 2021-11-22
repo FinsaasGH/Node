@@ -369,11 +369,8 @@ impl NodeQueryResponseMetadata {
     }
 }
 
-//TODO probably dead code?
 #[derive(Clone, Debug, Message, PartialEq)]
-pub struct BootstrapNeighborhoodNowMessage {}
 
-#[derive(Clone, Debug, Message, PartialEq)]
 pub struct NeighborhoodDotGraphRequest {
     pub client_id: u64,
 }
@@ -389,6 +386,7 @@ impl Message for NodeQueryMessage {
 }
 
 #[derive(Message, Clone)]
+
 pub struct DispatcherNodeQueryMessage {
     pub query: NodeQueryMessage,
     pub context: TransmitDataMsg,
@@ -438,11 +436,13 @@ pub struct RouteQueryResponse {
 }
 
 #[derive(Clone, Debug, Message, PartialEq)]
+
 pub struct RemoveNeighborMessage {
     pub public_key: PublicKey,
 }
 
 #[derive(Clone, Debug, Message, PartialEq)]
+
 pub enum NodeRecordMetadataMessage {
     Desirable(PublicKey, bool),
 }

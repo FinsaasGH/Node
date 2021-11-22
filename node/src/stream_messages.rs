@@ -11,6 +11,7 @@ use std::fmt::Formatter;
 use std::net::SocketAddr;
 
 #[derive(Message)]
+
 pub struct AddStreamMsg {
     pub connection_info: ConnectionInfo,
     pub origin_port: Option<u16>,
@@ -44,6 +45,7 @@ pub enum RemovedStreamType {
 }
 
 #[derive(PartialEq, Message)]
+
 pub struct RemoveStreamMsg {
     pub local_addr: SocketAddr,
     pub peer_addr: SocketAddr,
@@ -62,6 +64,7 @@ impl Debug for RemoveStreamMsg {
 }
 
 #[derive(Message, Clone)]
+
 pub struct PoolBindMessage {
     pub dispatcher_subs: DispatcherSubs,
     pub stream_handler_pool_subs: StreamHandlerPoolSubs,

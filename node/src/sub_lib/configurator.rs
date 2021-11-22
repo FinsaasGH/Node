@@ -7,6 +7,7 @@ use std::fmt;
 use std::fmt::{Debug, Formatter};
 
 #[derive(Debug, actix::Message, Clone, PartialEq)]
+
 pub struct NewPasswordMessage {
     pub new_password: String,
 }
