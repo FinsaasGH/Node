@@ -128,7 +128,6 @@ pub struct ClusteredParams {
 
 #[cfg(test)]
 mod tests {
-    use std::ptr::addr_of;
     use crate::daemon::daemon_initializer::{
         DaemonInitializerReal, RecipientsFactoryReal, RerunnerReal,
     };
@@ -147,6 +146,7 @@ mod tests {
     };
     use masq_lib::shared_schema::ConfiguratorError;
     use masq_lib::utils::SliceToVec;
+    use std::ptr::addr_of;
     use std::sync::{Arc, Mutex};
 
     fn test_clustered_params() -> ClusteredParams {

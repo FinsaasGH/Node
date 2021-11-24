@@ -450,8 +450,6 @@ mod tests {
     use crate::test_utils::logging::TestLogHandler;
     use crate::test_utils::recorder::{make_recorder, Recorder};
     use crate::test_utils::{assert_contains, await_value, wait_for};
-    use actix::System;
-    use actix::{Actor, Addr};
     use futures::future::lazy;
     use masq_lib::constants::UNMARSHAL_ERROR;
     use masq_lib::messages::{
@@ -466,7 +464,8 @@ mod tests {
     use std::net::Shutdown;
     use std::str::FromStr;
     use std::thread;
-    use std::time::Duration;
+    use std::time::{Duration, SystemTime};
+    use actix::{Actor, Addr, System};
     use websocket::client::sync::Client;
     use websocket::stream::sync::TcpStream;
     use websocket::ClientBuilder;
@@ -623,14 +622,23 @@ mod tests {
         let (ui_gateway, _, _) = make_recorder();
 
         thread::spawn(move || {
-            let system = System::new("logs_pre_upgrade_connection_errors");
+            let system = System::new();
             let ui_message_sub = subs(ui_gateway);
             let subject = lazy(move || {
                 let _subject = WebSocketSupervisorReal::new(port, ui_message_sub).unwrap();
                 Ok(())
             });
             actix::spawn(subject);
-            system.run();
+            let now = SystemTime::now();
+            let _ = system.run();
+            match now.elapsed() {
+                Ok(elapsed) => println!(
+                    "Time taken: {}.{:06} seconds",
+                    elapsed.as_secs(),
+                    elapsed.subsec_micros()
+                ),
+                Err(e) => println!("An error occurred: {:?}", e),
+            }
         });
         wait_for_server(port);
 
@@ -645,14 +653,23 @@ mod tests {
         let (ui_gateway, _, _) = make_recorder();
 
         thread::spawn(move || {
-            let system = System::new("rejects_connection_attempt_with_improper_protocol_name");
+            let system = System::new();
             let ui_message_sub = subs(ui_gateway);
             let subject = lazy(move || {
                 let _subject = WebSocketSupervisorReal::new(port, ui_message_sub).unwrap();
                 Ok(())
             });
             actix::spawn(subject);
-            system.run();
+            let now = SystemTime::now();
+            let _ = system.run();
+            match now.elapsed() {
+                Ok(elapsed) => println!(
+                    "Time taken: {}.{:06} seconds",
+                    elapsed.as_secs(),
+                    elapsed.subsec_micros()
+                ),
+                Err(e) => println!("An error occurred: {:?}", e),
+            }
         });
         wait_for_server(port);
 
@@ -672,14 +689,23 @@ mod tests {
         let (ui_gateway, _, _) = make_recorder();
 
         thread::spawn(move || {
-            let system = System::new("logs_unexpected_binary_ping_pong_websocket_messages");
+            let system = System::new();
             let ui_message_sub = subs(ui_gateway);
             let subject = lazy(move || {
                 let _subject = WebSocketSupervisorReal::new(port, ui_message_sub).unwrap();
                 Ok(())
             });
             actix::spawn(subject);
-            system.run();
+            let now = SystemTime::now();
+            let _ = system.run();
+            match now.elapsed() {
+                Ok(elapsed) => println!(
+                    "Time taken: {}.{:06} seconds",
+                    elapsed.as_secs(),
+                    elapsed.subsec_micros()
+                ),
+                Err(e) => println!("An error occurred: {:?}", e),
+            }
         });
         let mut client = await_value(None, || UiConnection::make(port, NODE_UI_PROTOCOL)).unwrap();
 
@@ -709,14 +735,23 @@ mod tests {
         let (ui_gateway, ui_gateway_awaiter, ui_gateway_recording_arc) = make_recorder();
 
         thread::spawn(move || {
-            let system = System::new("can_connect_two_clients_and_receive_messages_from_them");
+            let system = System::new();
             let ui_message_sub = subs(ui_gateway);
             let subject = lazy(move || {
                 let _subject = WebSocketSupervisorReal::new(port, ui_message_sub).unwrap();
                 Ok(())
             });
             actix::spawn(subject);
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         let mut one_client = wait_for_client(port, NODE_UI_PROTOCOL);
@@ -1023,14 +1058,23 @@ mod tests {
         let (ui_gateway, ui_gateway_awaiter, ui_gateway_recording_arc) = make_recorder();
 
         thread::spawn(move || {
-            let system = System::new("once_a_client_sends_a_close_no_more_data_is_accepted");
+            let system = System::new();
             let ui_message_sub = subs(ui_gateway);
             let subject = lazy(move || {
                 let _subject = WebSocketSupervisorReal::new(port, ui_message_sub).unwrap();
                 Ok(())
             });
             actix::spawn(subject);
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         let mut client = await_value(None, || UiConnection::make(port, NODE_UI_PROTOCOL)).unwrap();
@@ -1059,14 +1103,23 @@ mod tests {
         let (ui_gateway, ui_gateway_awaiter, ui_gateway_recording_arc) = make_recorder();
 
         thread::spawn(move || {
-            let system = System::new("a_client_that_violates_the_protocol_is_terminated");
+            let system = System::new();
             let ui_message_sub = subs(ui_gateway);
             let subject = lazy(move || {
                 let _subject = WebSocketSupervisorReal::new(port, ui_message_sub).unwrap();
                 Ok(())
             });
             actix::spawn(subject);
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
         let mut client = await_value(None, || UiConnection::make(port, "MASQNode-UIv2")).unwrap();
         client.send(UiShutdownRequest {});
@@ -1093,7 +1146,7 @@ mod tests {
         let port = find_free_port();
         let (ui_gateway, _, _) = make_recorder();
         let ui_message_sub = subs(ui_gateway);
-        let system = System::new("send_msg_sends_a_message_to_the_client");
+        let system = System::new();
         let lazy_future = lazy(move || {
             let subject = WebSocketSupervisorReal::new(port, ui_message_sub).unwrap();
             let one_mock_client = ClientWrapperMock::new()
@@ -1126,7 +1179,16 @@ mod tests {
         });
         actix::spawn(lazy_future);
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     #[test]
@@ -1134,7 +1196,7 @@ mod tests {
         let port = find_free_port();
         let (ui_gateway, _, _) = make_recorder();
         let ui_message_sub = subs(ui_gateway);
-        let system = System::new("send_msg_sends_a_message_to_the_client");
+        let system = System::new();
         let lazy_future = lazy(move || {
             let subject = WebSocketSupervisorReal::new(port, ui_message_sub).unwrap();
             let one_mock_client = ClientWrapperMock::new()
@@ -1169,7 +1231,16 @@ mod tests {
         });
         actix::spawn(lazy_future);
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     #[test]
@@ -1177,7 +1248,7 @@ mod tests {
         let port = find_free_port();
         let (ui_gateway, _, _) = make_recorder();
         let ui_message_sub = subs(ui_gateway);
-        let system = System::new("send_msg_sends_a_message_to_the_client");
+        let system = System::new();
         let lazy_future = lazy(move || {
             let subject = WebSocketSupervisorReal::new(port, ui_message_sub).unwrap();
             let one_mock_client = ClientWrapperMock::new()
@@ -1218,7 +1289,16 @@ mod tests {
         });
         actix::spawn(lazy_future);
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     #[test]
@@ -1227,7 +1307,7 @@ mod tests {
         let port = find_free_port();
         let (ui_gateway, _, _) = make_recorder();
         let ui_message_sub = subs(ui_gateway);
-        let system = System::new("send_msg_tries_to_send_message_and_panics_on_flush");
+        let system = System::new();
         let lazy_future = lazy(move || {
             let subject = WebSocketSupervisorReal::new(port, ui_message_sub).unwrap();
             let mock_client = ClientWrapperMock::new()
@@ -1247,7 +1327,16 @@ mod tests {
         });
         actix::spawn(lazy_future);
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new().exists_log_containing(
             "WARN: WebSocketSupervisor: Client 0 dropped its connection before it could be flushed",
         );
@@ -1259,7 +1348,7 @@ mod tests {
         let port = find_free_port();
         let (ui_gateway, _, _) = make_recorder();
         let ui_message_sub = subs(ui_gateway);
-        let system = System::new("send_msg_tries_to_send_message_and_panics");
+        let system = System::new();
         let lazy_future = lazy(move || {
             let subject = WebSocketSupervisorReal::new(port, ui_message_sub).unwrap();
             let mock_client =
@@ -1277,7 +1366,16 @@ mod tests {
         });
         actix::spawn(lazy_future);
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new().exists_log_containing(
             "ERROR: WebSocketSupervisor: Error sending to client 0: NoDataAvailable",
         );
@@ -1289,7 +1387,7 @@ mod tests {
         let port = find_free_port();
         let (ui_gateway, _, _) = make_recorder();
         let ui_message_sub = subs(ui_gateway);
-        let system = System::new("send_msg_fails_to_look_up_client_to_send_to");
+        let system = System::new();
         let lazy_future = lazy(move || {
             let subject = WebSocketSupervisorReal::new(port, ui_message_sub).unwrap();
             let msg = NodeToUiMessage {
@@ -1305,6 +1403,15 @@ mod tests {
         });
         actix::spawn(lazy_future);
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 }

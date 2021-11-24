@@ -33,13 +33,13 @@ impl Debug for PeerActors {
 }
 
 #[derive(Debug, Message, Clone)]
-
+#[rtype(result = "")]
 pub struct BindMessage {
     pub peer_actors: PeerActors,
 }
 
 #[derive(Message, Clone)]
-
+#[rtype(result = "")]
 pub struct StartMessage {}
 
 #[cfg(test)]
@@ -49,7 +49,7 @@ mod tests {
 
     #[test]
     fn peer_actors_debug() {
-        let _ = System::new("test");
+        let _ = System::new();
         let subject = peer_actors_builder().build();
 
         let result = format!("{:?}", subject);

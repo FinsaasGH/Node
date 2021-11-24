@@ -144,6 +144,7 @@ mod tests {
     use masq_lib::test_utils::utils::TEST_DEFAULT_CHAIN;
     use std::net::{IpAddr, Ipv4Addr};
     use std::str::FromStr;
+    use std::time::SystemTime;
 
     #[test]
     fn converts_no_lookup_incipient_message_to_live_and_sends_to_dispatcher() {
@@ -157,7 +158,7 @@ mod tests {
             make_meaningless_message_type(),
         )
         .unwrap();
-        let system = System::new("");
+        let system = System::new();
         let peer_actors = peer_actors_builder().dispatcher(dispatcher).build();
         let subject = ConsumingService::new(
             main_cryptde(),
@@ -168,7 +169,16 @@ mod tests {
         subject.consume_no_lookup(package.clone());
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let dispatcher_recording = dispatcher_recording_arc.lock().unwrap();
         let transmit_data_msg = dispatcher_recording.get_record::<TransmitDataMsg>(0);
         let (lcp, _) = LiveCoresPackage::from_no_lookup_incipient(package, main_cryptde()).unwrap();
@@ -193,7 +203,7 @@ mod tests {
             node_addr: target_node_addr.clone(),
             payload: CryptData::new(b""),
         };
-        let system = System::new("");
+        let system = System::new();
         let peer_actors = peer_actors_builder().build();
         let subject = ConsumingService::new(
             main_cryptde(),
@@ -204,7 +214,16 @@ mod tests {
         subject.consume_no_lookup(package);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new ().exists_log_containing ("ERROR: ConsumingService: Could not accept CORES package for transmission: EncryptionError(EmptyKey)");
     }
 
@@ -227,7 +246,7 @@ mod tests {
         let payload = make_meaningless_message_type();
         let incipient_cores_package =
             IncipientCoresPackage::new(cryptde, route.clone(), payload, &destination_key).unwrap();
-        let system = System::new("converts_incipient_message_to_live_and_sends_to_dispatcher");
+        let system = System::new();
         let peer_actors = peer_actors_builder().dispatcher(dispatcher).build();
         let subject = ConsumingService::new(
             cryptde,
@@ -238,7 +257,16 @@ mod tests {
         subject.consume(incipient_cores_package.clone());
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let dispatcher_recording = dispatcher_recording_arc.lock().unwrap();
         let record = dispatcher_recording.get_record::<TransmitDataMsg>(0);
         let (expected_lcp, _) =
@@ -274,7 +302,7 @@ mod tests {
         let payload = make_meaningless_message_type();
         let incipient_cores_package =
             IncipientCoresPackage::new(cryptde, route.clone(), payload, &destination_key).unwrap();
-        let system = System::new("consume_sends_zero_hop_incipient_directly_to_hopper");
+        let system = System::new();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
         let subject = ConsumingService::new(
             cryptde,
@@ -285,7 +313,16 @@ mod tests {
         subject.consume(incipient_cores_package.clone());
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let hopper_recording = hopper_recording_arc.lock().unwrap();
         let record = hopper_recording.get_record::<InboundClientData>(0);
         let (expected_lcp, _) =
@@ -307,7 +344,7 @@ mod tests {
     #[test]
     fn consume_logs_error_when_given_bad_input_data() {
         init_test_logging();
-        let _system = System::new("consume_logs_error_when_given_bad_input_data");
+        let _system = System::new();
         let peer_actors = peer_actors_builder().build();
         let to_dispatcher = peer_actors.dispatcher.from_dispatcher_client;
         let to_hopper = peer_actors.hopper.from_dispatcher;

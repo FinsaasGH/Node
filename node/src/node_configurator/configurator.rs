@@ -730,6 +730,7 @@ mod tests {
     };
     use masq_lib::ui_gateway::{MessagePath, MessageTarget};
     use std::sync::{Arc, Mutex};
+    use std::time::SystemTime;
 
     use crate::db_config::persistent_configuration::{
         PersistentConfigError, PersistentConfigurationReal,
@@ -781,7 +782,7 @@ mod tests {
 
     #[test]
     fn ignores_unexpected_message() {
-        let system = System::new("test");
+        let system = System::new();
         let subject = make_subject(None);
         let subject_addr = subject.start();
         let (ui_gateway, _, ui_gateway_recording) = make_recorder();
@@ -796,14 +797,23 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let recording = ui_gateway_recording.lock().unwrap();
         assert_eq!(recording.len(), 0);
     }
 
     #[test]
     fn check_password_works() {
-        let system = System::new("test");
+        let system = System::new();
         let check_password_params_arc = Arc::new(Mutex::new(vec![]));
         let persistent_config = PersistentConfigurationMock::new()
             .check_password_params(&check_password_params_arc)
@@ -825,7 +835,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let check_password_params = check_password_params_arc.lock().unwrap();
         assert_eq!(*check_password_params, vec![Some("password".to_string())]);
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
@@ -865,7 +884,7 @@ mod tests {
 
     #[test]
     fn change_password_works() {
-        let system = System::new("test");
+        let system = System::new();
         let change_password_params_arc = Arc::new(Mutex::new(vec![]));
         let persistent_config = PersistentConfigurationMock::new()
             .change_password_params(&change_password_params_arc)
@@ -892,7 +911,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let change_password_params = change_password_params_arc.lock().unwrap();
         assert_eq!(
             *change_password_params,
@@ -985,7 +1013,7 @@ mod tests {
 
     #[test]
     fn handle_wallet_addresses_works() {
-        let system = System::new("test");
+        let system = System::new();
         let mnemonic_seed_params_arc = Arc::new(Mutex::new(vec![]));
         let persistent_config = PersistentConfigurationMock::new()
             .check_password_result(Ok(true))
@@ -1014,7 +1042,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let mnemonic_seed_params = mnemonic_seed_params_arc.lock().unwrap();
         assert_eq!(*mnemonic_seed_params, vec!["123password".to_string()]);
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
@@ -1244,9 +1281,18 @@ mod tests {
             })
             .unwrap();
 
-        let system = System::new("test");
+        let system = System::new();
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let response = ui_gateway_recording.get_record::<NodeToUiMessage>(0);
         let (generated_wallets, context_id) =
@@ -1450,9 +1496,18 @@ mod tests {
             })
             .unwrap();
 
-        let system = System::new("test");
+        let system = System::new();
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let response = ui_gateway_recording.get_record::<NodeToUiMessage>(0);
         let (_, context_id) = UiRecoverWalletsResponse::fmb(response.body.clone()).unwrap();
@@ -1702,9 +1757,18 @@ mod tests {
             })
             .unwrap();
 
-        let system = System::new("test");
+        let system = System::new();
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let response = ui_gateway_recording.get_record::<NodeToUiMessage>(0);
         let (_, context_id) = UiSetConfigurationResponse::fmb(response.body.clone()).unwrap();

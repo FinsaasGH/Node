@@ -584,6 +584,7 @@ mod tests {
     use std::str::FromStr;
     use std::sync::{Arc, Mutex};
     use std::thread;
+    use std::time::SystemTime;
     use tokio::prelude::Async;
 
     struct TrafficAnalyzerMock {}
@@ -616,7 +617,7 @@ mod tests {
         let awaiter = dispatcher.get_awaiter();
 
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
             let mut subject = StreamHandlerPool::new(vec![]);
             subject.stream_connector = Box::new(StreamConnectorMock::new());
             let subject_addr: Addr<StreamHandlerPool> = subject.start();
@@ -660,7 +661,16 @@ mod tests {
                 ))
                 .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         awaiter.await_message_count(4);
@@ -726,7 +736,7 @@ mod tests {
         let peer_addr = SocketAddr::from_str("1.2.3.5:6789").unwrap();
 
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
             let subject = StreamHandlerPool::new(vec![]);
 
             let subject_addr: Addr<StreamHandlerPool> = subject.start();
@@ -770,7 +780,16 @@ mod tests {
                 })
                 .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         TestLogHandler::new().await_log_containing(
@@ -789,7 +808,7 @@ mod tests {
         let (sub_tx, sub_rx) = unbounded();
 
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
 
             let mut subject = StreamHandlerPool::new(vec![]);
             subject.stream_connector = Box::new(
@@ -809,7 +828,16 @@ mod tests {
                 .unwrap();
 
             sub_tx.send(subject_subs).expect("Internal Error");
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         let subject_subs = sub_rx.recv().unwrap();
@@ -893,7 +921,7 @@ mod tests {
         let peer_addr = SocketAddr::from_str("1.2.3.5:5673").unwrap();
 
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
 
             let mut subject = StreamHandlerPool::new(vec![Box::new(JsonDiscriminatorFactory {})]);
             subject.stream_connector = Box::new(StreamConnectorMock::new().connection(
@@ -953,7 +981,16 @@ mod tests {
                 })
                 .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         TestLogHandler::new().await_log_containing(
@@ -965,7 +1002,7 @@ mod tests {
     #[test]
     fn handle_remove_stream_msg_handles_report_to_counterpart_scenario() {
         let (recorder, _, recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let sub = recorder.start().recipient::<StreamShutdownMsg>();
         let mut subject = StreamHandlerPool::new(vec![]);
         let peer_addr = SocketAddr::from_str("1.2.3.4:5678").unwrap();
@@ -984,7 +1021,16 @@ mod tests {
         });
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert_eq!(subject.stream_writers.contains_key(&sw_key), false);
         let recording = recording_arc.lock().unwrap();
         let record = recording.get_record::<StreamShutdownMsg>(0);
@@ -1001,7 +1047,7 @@ mod tests {
     #[test]
     fn handle_remove_stream_msg_handles_no_report_to_counterpart_scenario() {
         let (recorder, _, recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let sub = recorder.start().recipient::<StreamShutdownMsg>();
         let mut subject = StreamHandlerPool::new(vec![]);
         let peer_addr = SocketAddr::from_str("1.2.3.4:5678").unwrap();
@@ -1019,7 +1065,16 @@ mod tests {
         });
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert_eq!(subject.stream_writers.contains_key(&sw_key), false);
         let recording = recording_arc.lock().unwrap();
         let record = recording.get_record::<StreamShutdownMsg>(0);
@@ -1039,7 +1094,7 @@ mod tests {
     #[test]
     fn handle_remove_stream_msg_handles_stream_waiting_for_connect_scenario() {
         let (recorder, _, recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let sub = recorder.start().recipient::<StreamShutdownMsg>();
         let mut subject = StreamHandlerPool::new(vec![]);
         let peer_addr = SocketAddr::from_str("1.2.3.4:5678").unwrap();
@@ -1055,7 +1110,16 @@ mod tests {
         });
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert_eq!(subject.stream_writers.contains_key(&sw_key), false);
         let recording = recording_arc.lock().unwrap();
         let record = recording.get_record::<StreamShutdownMsg>(0);
@@ -1079,7 +1143,7 @@ mod tests {
         let connect_pair_params_arc_a = connect_pair_params_arc.clone();
         let (neighborhood, neighborhood_awaiter, neighborhood_recording_arc) = make_recorder();
         thread::spawn(move || {
-            let system = System::new("when_stream_handler_pool_fails_to_create_nonexistent_stream_for_write_then_it_logs_and_notifies_neighborhood");
+            let system = System::new();
             let mut subject = StreamHandlerPool::new(vec![]);
             subject.stream_connector = Box::new(
                 StreamConnectorMock::new()
@@ -1118,7 +1182,16 @@ mod tests {
                 })
                 .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         TestLogHandler::new().await_log_containing("ERROR: Dispatcher: Stream to 1.2.3.5:7000 does not exist and could not be connected; discarding 5 bytes: other error", 1000);
@@ -1190,7 +1263,16 @@ mod tests {
 
             tx.send(subject_subs).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         let subject_subs = rx.recv().unwrap();
@@ -1263,7 +1345,7 @@ mod tests {
         let (tx, rx) = unbounded();
 
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
             let subject = StreamHandlerPool::new(vec![]);
 
             let subject_addr: Addr<StreamHandlerPool> = subject.start();
@@ -1296,7 +1378,16 @@ mod tests {
 
             tx.send(subject_subs).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         let subject_subs = rx.recv().unwrap();
@@ -1341,7 +1432,7 @@ mod tests {
         let key = cryptde.public_key().clone();
 
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
             let subject = StreamHandlerPool::new(vec![]);
 
             let subject_addr: Addr<StreamHandlerPool> = subject.start();
@@ -1369,7 +1460,16 @@ mod tests {
                 })
                 .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         TestLogHandler::new().await_log_containing(
@@ -1389,7 +1489,7 @@ mod tests {
         let key = cryptde.public_key().clone();
 
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
             let subject = StreamHandlerPool::new(vec![]);
 
             let subject_addr: Addr<StreamHandlerPool> = subject.start();
@@ -1421,7 +1521,16 @@ mod tests {
                 })
                 .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         TestLogHandler::new().await_log_containing(
@@ -1453,7 +1562,7 @@ mod tests {
         let (tx, rx) = unbounded();
 
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
             let mut subject = StreamHandlerPool::new(vec![]);
             subject
                 .stream_writers
@@ -1484,7 +1593,16 @@ mod tests {
 
             tx.send(subject_subs).expect("Tx failure");
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
         let subject_subs = rx.recv().unwrap();
 
@@ -1574,7 +1692,7 @@ mod tests {
         let (tx, rx) = unbounded();
 
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
             let mut subject = StreamHandlerPool::new(vec![]);
             subject.stream_connector = Box::new(
                 StreamConnectorMock::new()
@@ -1609,7 +1727,16 @@ mod tests {
 
             tx.send(subject_subs).expect("Tx failure");
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
         let subject_subs = rx.recv().unwrap();
 
@@ -1703,7 +1830,7 @@ mod tests {
             data: b"hello".to_vec(),
         };
 
-        let system = System::new("test");
+        let system = System::new();
         let subject = StreamHandlerPool::new(vec![]);
         let subject_addr: Addr<StreamHandlerPool> = subject.start();
         let subject_subs = StreamHandlerPool::make_subs_from(&subject_addr);
@@ -1729,7 +1856,16 @@ mod tests {
             })
             .unwrap();
 
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     #[test]
@@ -1751,7 +1887,7 @@ mod tests {
         let peer_addr = SocketAddr::from_str("1.2.3.5:6789").unwrap();
 
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
             let subject = StreamHandlerPool::new(vec![]);
 
             let subject_addr: Addr<StreamHandlerPool> = subject.start();
@@ -1805,7 +1941,16 @@ mod tests {
                 })
                 .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         await_messages(2, &write_stream_params_arc);
@@ -1824,7 +1969,7 @@ mod tests {
         let peer_addr = SocketAddr::from_str("1.2.3.5:6789").unwrap();
 
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
             let mut subject = StreamHandlerPool::new(vec![]);
             subject.traffic_analyzer = Box::new(TrafficAnalyzerMock {});
 
@@ -1869,7 +2014,16 @@ mod tests {
                 })
                 .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         TestLogHandler::new().await_log_containing("Masking failed for 1.2.3.5:6789: Low-level data error: don't care. Discarding 5 bytes.", 1000);
@@ -1902,7 +2056,16 @@ mod tests {
 
             tx.send(subject_subs).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         let subject_subs = rx.recv().unwrap();

@@ -593,6 +593,7 @@ mod tests {
     use std::str::FromStr;
     use std::sync::{Arc, Mutex};
     use std::thread;
+    use std::time::SystemTime;
 
     use actix::Recipient;
     use actix::System;
@@ -1878,7 +1879,7 @@ mod tests {
         fn new() -> ActorSystemFactoryMock {
             let (tx, rx) = unbounded();
             thread::spawn(move || {
-                let system = System::new("test");
+                let system = System::new();
 
                 let stream_handler_pool_cluster = {
                     let (stream_handler_pool, awaiter, recording) = make_recorder();
@@ -1890,7 +1891,16 @@ mod tests {
                 };
 
                 tx.send(stream_handler_pool_cluster).unwrap();
-                system.run();
+                let now = SystemTime::now();
+                let _ = system.run();
+                match now.elapsed() {
+                    Ok(elapsed) => println!(
+                        "Time taken: {}.{:06} seconds",
+                        elapsed.as_secs(),
+                        elapsed.subsec_micros()
+                    ),
+                    Err(e) => println!("An error occurred: {:?}", e),
+                }
             });
             let stream_handler_pool_cluster = rx.recv().unwrap();
             ActorSystemFactoryMock {

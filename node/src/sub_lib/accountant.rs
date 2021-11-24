@@ -44,7 +44,7 @@ impl Debug for AccountantSubs {
 }
 
 #[derive(Clone, PartialEq, Debug, Message)]
-
+#[rtype(result = "")]
 pub struct ReportRoutingServiceProvidedMessage {
     pub paying_wallet: Wallet,
     pub payload_size: usize,
@@ -53,7 +53,7 @@ pub struct ReportRoutingServiceProvidedMessage {
 }
 
 #[derive(Clone, PartialEq, Debug, Message)]
-
+#[rtype(result = "")]
 pub struct ReportExitServiceProvidedMessage {
     pub paying_wallet: Wallet,
     pub payload_size: usize,
@@ -62,7 +62,7 @@ pub struct ReportExitServiceProvidedMessage {
 }
 
 #[derive(Clone, PartialEq, Debug, Message)]
-
+#[rtype(result = "")]
 pub struct ReportRoutingServiceConsumedMessage {
     pub earning_wallet: Wallet,
     pub payload_size: usize,
@@ -71,7 +71,7 @@ pub struct ReportRoutingServiceConsumedMessage {
 }
 
 #[derive(Clone, PartialEq, Debug, Message)]
-
+#[rtype(result = "")]
 pub struct ReportExitServiceConsumedMessage {
     pub earning_wallet: Wallet,
     pub payload_size: usize,
@@ -80,14 +80,14 @@ pub struct ReportExitServiceConsumedMessage {
 }
 
 #[derive(Clone, PartialEq, Debug, Message)]
-
+#[rtype(result = "")]
 pub struct GetFinancialStatisticsMessage {
     pub client_id: u64,
 }
 
 #[derive(Clone, PartialEq, Debug, Message, Serialize, Deserialize)]
-
 #[serde(rename_all = "camelCase")]
+#[rtype(result = "")]
 pub struct FinancialStatisticsMessage {
     pub pending_credit: i64,
     pub pending_debt: i64,

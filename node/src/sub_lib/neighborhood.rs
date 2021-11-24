@@ -370,7 +370,7 @@ impl NodeQueryResponseMetadata {
 }
 
 #[derive(Clone, Debug, Message, PartialEq)]
-
+#[rtype(result = "")]
 pub struct NeighborhoodDotGraphRequest {
     pub client_id: u64,
 }
@@ -386,7 +386,7 @@ impl Message for NodeQueryMessage {
 }
 
 #[derive(Message, Clone)]
-
+#[rtype(result = "")]
 pub struct DispatcherNodeQueryMessage {
     pub query: NodeQueryMessage,
     pub context: TransmitDataMsg,
@@ -436,13 +436,13 @@ pub struct RouteQueryResponse {
 }
 
 #[derive(Clone, Debug, Message, PartialEq)]
-
+#[rtype(result = "")]
 pub struct RemoveNeighborMessage {
     pub public_key: PublicKey,
 }
 
 #[derive(Clone, Debug, Message, PartialEq)]
-
+#[rtype(result = "")]
 pub enum NodeRecordMetadataMessage {
     Desirable(PublicKey, bool),
 }

@@ -4,13 +4,8 @@ use std::cmp::Ordering;
 use std::convert::TryFrom;
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use actix::{Actor, Addr, Context, Handler, MessageResult, Recipient, System};
 
-use actix::Addr;
-use actix::Context;
-use actix::Handler;
-use actix::MessageResult;
-use actix::Recipient;
-use actix::{Actor, System};
 use itertools::Itertools;
 
 use gossip_acceptor::GossipAcceptor;
@@ -1239,14 +1234,13 @@ mod tests {
     use std::str::FromStr;
     use std::sync::{Arc, Mutex};
     use std::thread;
-
-    use actix::dev::{MessageResponse, ResponseChannel};
+    use std::time::SystemTime;
+    use actix::dev::*;
     use actix::Message;
-    use actix::Recipient;
-    use actix::System;
+
     use itertools::Itertools;
     use serde_cbor;
-    use tokio::prelude::Future;
+
 
     use masq_lib::constants::{DEFAULT_CHAIN, TLS_PORT};
     use masq_lib::test_utils::utils::{ensure_node_home_directory_exists, TEST_DEFAULT_CHAIN};
@@ -1399,7 +1393,7 @@ mod tests {
         let earning_wallet = make_wallet("earning");
         let consuming_wallet = Some(make_paying_wallet(b"consuming"));
         let system =
-            System::new("node_with_no_neighbor_configs_ignores_bootstrap_neighborhood_now_message");
+            System::new();
         let subject = Neighborhood::new(
             cryptde,
             &bc_from_nc_plus(
@@ -1420,7 +1414,16 @@ mod tests {
         sub.try_send(StartMessage {}).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let recording = hopper_recording_arc.lock().unwrap();
         assert_eq!(recording.len(), 0);
         TestLogHandler::new()
@@ -1436,7 +1439,7 @@ mod tests {
         let earning_wallet = make_wallet("earning");
         let consuming_wallet = Some(make_paying_wallet(b"consuming"));
         let neighbor_node = make_node_record(3456, true);
-        let system = System::new("node_with_bad_neighbor_config_panics");
+        let system = System::new();
         let subject = Neighborhood::new(
             cryptde,
             &bc_from_nc_plus(
@@ -1464,7 +1467,16 @@ mod tests {
         sub.try_send(StartMessage {}).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     #[test]
@@ -1572,14 +1584,23 @@ mod tests {
             GossipFailure_0v1::ManualRejection,
             0,
         );
-        let system = System::new("responds_with_none_when_initially_configured_with_no_data");
+        let system = System::new();
         let addr: Addr<Neighborhood> = subject.start();
         let sub = addr.recipient::<ExpiredCoresPackage<GossipFailure_0v1>>();
 
         sub.try_send(ecp1).unwrap();
         sub.try_send(ecp2).unwrap();
 
-        system.run(); // If this never halts, it's because the Neighborhood isn't properly killing its actor
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        } // If this never halts, it's because the Neighborhood isn't properly killing its actor
 
         let tlh = TestLogHandler::new();
         tlh.exists_log_containing ("WARN: Neighborhood: Node at 3.4.5.6 refused Debut: No neighbors for Introduction or Pass");
@@ -1589,7 +1610,7 @@ mod tests {
 
     #[test]
     fn node_query_responds_with_none_when_initially_configured_with_no_data() {
-        let system = System::new("responds_with_none_when_initially_configured_with_no_data");
+        let system = System::new();
         let subject = make_standard_subject();
         let addr: Addr<Neighborhood> = subject.start();
         let sub: Recipient<NodeQueryMessage> = addr.recipient::<NodeQueryMessage>();
@@ -1597,7 +1618,16 @@ mod tests {
         let future = sub.send(NodeQueryMessage::PublicKey(PublicKey::new(&b"booga"[..])));
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let result = future.wait().unwrap();
         assert_eq!(result.is_none(), true);
     }
@@ -1608,7 +1638,7 @@ mod tests {
         let earning_wallet = make_wallet("earning");
         let consuming_wallet = Some(make_paying_wallet(b"consuming"));
         let system =
-            System::new("node_query_responds_with_none_when_key_query_matches_no_configured_data");
+            System::new();
         let subject = Neighborhood::new(
             cryptde,
             &bc_from_nc_plus(
@@ -1635,7 +1665,16 @@ mod tests {
         let future = sub.send(NodeQueryMessage::PublicKey(PublicKey::new(&b"blah"[..])));
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let result = future.wait().unwrap();
         assert_eq!(result.is_none(), true);
     }
@@ -1646,7 +1685,7 @@ mod tests {
         let earning_wallet = make_wallet("earning");
         let consuming_wallet = Some(make_paying_wallet(b"consuming"));
         let system =
-            System::new("node_query_responds_with_result_when_key_query_matches_configured_data");
+            System::new();
         let one_neighbor = make_node_record(2345, true);
         let another_neighbor = make_node_record(3456, true);
         let mut subject = Neighborhood::new(
@@ -1676,7 +1715,16 @@ mod tests {
         ));
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let result = future.wait().unwrap();
         assert_eq!(
             result.unwrap(),
@@ -1693,9 +1741,7 @@ mod tests {
         let cryptde: &dyn CryptDE = main_cryptde();
         let earning_wallet = make_wallet("earning");
         let consuming_wallet = Some(make_paying_wallet(b"consuming"));
-        let system = System::new(
-            "node_query_responds_with_none_when_ip_address_query_matches_no_configured_data",
-        );
+        let system = System::new();
         let subject = Neighborhood::new(
             cryptde,
             &bc_from_nc_plus(
@@ -1724,7 +1770,16 @@ mod tests {
         ));
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let result = future.wait().unwrap();
         assert_eq!(result.is_none(), true);
     }
@@ -1732,9 +1787,7 @@ mod tests {
     #[test]
     fn node_query_responds_with_result_when_ip_address_query_matches_configured_data() {
         let cryptde: &dyn CryptDE = main_cryptde();
-        let system = System::new(
-            "node_query_responds_with_result_when_ip_address_query_matches_configured_data",
-        );
+        let system = System::new();
         let node_record = make_node_record(1234, true);
         let another_node_record = make_node_record(2345, true);
         let mut subject = Neighborhood::new(
@@ -1768,7 +1821,16 @@ mod tests {
         ));
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let result = future.wait().unwrap();
         assert_eq!(
             result.unwrap(),
@@ -1783,7 +1845,7 @@ mod tests {
     #[test]
     fn route_query_responds_with_none_when_asked_for_route_with_too_many_hops() {
         let system =
-            System::new("route_query_responds_with_none_when_asked_for_route_with_too_many_hops");
+            System::new();
         let subject = make_standard_subject();
         let addr: Addr<Neighborhood> = subject.start();
         let sub: Recipient<RouteQueryMessage> = addr.recipient::<RouteQueryMessage>();
@@ -1791,7 +1853,16 @@ mod tests {
         let future = sub.send(RouteQueryMessage::data_indefinite_route_request(5));
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let result = future.wait().unwrap();
         assert_eq!(result, None);
     }
@@ -1799,7 +1870,7 @@ mod tests {
     #[test]
     fn route_query_responds_with_none_when_asked_for_two_hop_round_trip_route_without_consuming_wallet(
     ) {
-        let system = System::new("route_query_responds_with_none_when_asked_for_two_hop_round_trip_route_without_consuming_wallet");
+        let system = System::new();
         let subject = make_standard_subject();
         let addr: Addr<Neighborhood> = subject.start();
         let sub: Recipient<RouteQueryMessage> = addr.recipient::<RouteQueryMessage>();
@@ -1807,7 +1878,16 @@ mod tests {
         let future = sub.send(RouteQueryMessage::data_indefinite_route_request(2));
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let result = future.wait().unwrap();
         assert_eq!(result, None);
     }
@@ -1816,9 +1896,7 @@ mod tests {
     fn route_query_succeeds_when_asked_for_one_hop_round_trip_route_without_consuming_wallet() {
         let cryptde = main_cryptde();
         let earning_wallet = make_wallet("earning");
-        let system = System::new(
-            "route_query_succeeds_when_asked_for_one_hop_round_trip_route_without_consuming_wallet",
-        );
+        let system = System::new();
         let mut subject = make_standard_subject();
         subject
             .neighborhood_database
@@ -1850,7 +1928,16 @@ mod tests {
         let future = sub.send(msg);
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let segment = |nodes: Vec<&NodeRecord>, component: Component| {
             RouteSegment::new(
                 nodes.into_iter().map(|n| n.public_key()).collect(),
@@ -1900,7 +1987,7 @@ mod tests {
     #[test]
     fn route_query_responds_with_none_when_asked_for_one_hop_round_trip_route_without_consuming_wallet_when_back_route_needs_two_hops(
     ) {
-        let system = System::new("route_query_responds_with_none_when_asked_for_one_hop_round_trip_route_without_consuming_wallet_when_back_route_needs_two_hops");
+        let system = System::new();
         let mut subject = make_standard_subject();
         let a = &make_node_record(1234, true);
         let b = &subject.neighborhood_database.root().clone();
@@ -1923,7 +2010,16 @@ mod tests {
         let future = sub.send(msg);
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let result = future.wait().unwrap();
         assert_eq!(result, None);
     }
@@ -1931,7 +2027,7 @@ mod tests {
     #[test]
     fn route_query_responds_with_none_when_asked_for_two_hop_one_way_route_without_consuming_wallet(
     ) {
-        let system = System::new("route_query_responds_with_none_when_asked_for_two_hop_one_way_route_without_consuming_wallet");
+        let system = System::new();
         let subject = make_standard_subject();
         let addr: Addr<Neighborhood> = subject.start();
         let sub: Recipient<RouteQueryMessage> = addr.recipient::<RouteQueryMessage>();
@@ -1940,7 +2036,16 @@ mod tests {
         let future = sub.send(msg);
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let result = future.wait().unwrap();
         assert_eq!(result, None);
     }
@@ -1948,7 +2053,7 @@ mod tests {
     #[test]
     fn route_query_responds_with_standard_zero_hop_route_when_requested() {
         let cryptde = main_cryptde();
-        let system = System::new("responds_with_standard_zero_hop_route_when_requested");
+        let system = System::new();
         let subject = make_standard_subject();
         let addr: Addr<Neighborhood> = subject.start();
         let sub: Recipient<RouteQueryMessage> = addr.recipient::<RouteQueryMessage>();
@@ -1956,7 +2061,16 @@ mod tests {
         let future = sub.send(RouteQueryMessage::data_indefinite_route_request(0));
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let result = future.wait().unwrap().unwrap();
         let expected_response = RouteQueryResponse {
             route: Route::round_trip(
@@ -2017,7 +2131,7 @@ mod tests {
     fn route_query_messages() {
         let cryptde = main_cryptde();
         let earning_wallet = make_wallet("earning");
-        let system = System::new("route_query_messages");
+        let system = System::new();
         let mut subject = make_standard_subject();
         subject
             .neighborhood_database
@@ -2051,7 +2165,16 @@ mod tests {
         let data_route = sub.send(RouteQueryMessage::data_indefinite_route_request(2));
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let result = data_route.wait().unwrap().unwrap();
         let contract_address = TEST_DEFAULT_CHAIN.rec().contract;
@@ -2233,7 +2356,7 @@ mod tests {
     #[test]
     fn return_route_ids_increase() {
         let cryptde = main_cryptde();
-        let system = System::new("return_route_ids_increase");
+        let system = System::new();
         let (_, _, _, subject) = make_o_r_e_subject();
 
         let addr: Addr<Neighborhood> = subject.start();
@@ -2243,7 +2366,16 @@ mod tests {
         let data_route_1 = sub.send(RouteQueryMessage::data_indefinite_route_request(2));
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let result_0 = data_route_0.wait().unwrap().unwrap();
         let result_1 = data_route_1.wait().unwrap().unwrap();
@@ -2265,7 +2397,7 @@ mod tests {
     #[test]
     fn can_update_consuming_wallet() {
         let cryptde = main_cryptde();
-        let system = System::new("can_update_consuming_wallet");
+        let system = System::new();
         let (o, r, e, subject) = make_o_r_e_subject();
         let addr: Addr<Neighborhood> = subject.start();
         let set_wallet_sub = addr.clone().recipient::<SetConsumingWalletMessage>();
@@ -2297,7 +2429,16 @@ mod tests {
         let route_request_2 = route_sub.send(RouteQueryMessage::data_indefinite_route_request(2));
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let route_1 = route_request_1.wait().unwrap().unwrap().route;
         let route_2 = route_request_2.wait().unwrap().unwrap().route;
@@ -2470,7 +2611,7 @@ mod tests {
         let other_neighbor_inside = other_neighbor.clone();
 
         thread::spawn(move || {
-            let system = System::new("gossips_after_removing_a_neighbor");
+            let system = System::new();
             let mut subject = Neighborhood::new(
                 cryptde,
                 &bc_from_nc_plus(
@@ -2513,7 +2654,16 @@ mod tests {
             })
             .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         let other_neighbor_cryptde =
@@ -2602,7 +2752,7 @@ mod tests {
             payload: gossip.clone(),
             payload_len: 0,
         };
-        let system = System::new("");
+        let system = System::new();
         let addr: Addr<Neighborhood> = subject.start();
         let peer_actors = peer_actors_builder().build();
         addr.try_send(BindMessage { peer_actors }).unwrap();
@@ -2611,7 +2761,16 @@ mod tests {
         sub.try_send(cores_package).unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let mut handle_params = handle_params_arc.lock().unwrap();
         let (call_database, call_agrs, call_gossip_source) = handle_params.remove(0);
         assert!(handle_params.is_empty());
@@ -2650,7 +2809,7 @@ mod tests {
         subject.gossip_acceptor = Box::new(gossip_acceptor);
         let (hopper, _, hopper_recording_arc) = make_recorder();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
-        let system = System::new("");
+        let system = System::new();
         subject.hopper_no_lookup = Some(peer_actors.hopper.from_hopper_client_no_lookup);
 
         subject.handle_gossip(
@@ -2659,7 +2818,16 @@ mod tests {
         );
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let hopper_recording = hopper_recording_arc.lock().unwrap();
         let package = hopper_recording.get_record::<NoLookupIncipientCoresPackage>(0);
         assert_eq!(1, hopper_recording.len());
@@ -2688,7 +2856,7 @@ mod tests {
             ));
         let mut subject: Neighborhood = neighborhood_from_nodes(&subject_node, Some(&neighbor));
         let (hopper, _, hopper_recording_arc) = make_recorder();
-        let system = System::new("neighborhood_transmits_gossip_failure_properly");
+        let system = System::new();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
         subject.hopper_no_lookup = Some(peer_actors.hopper.from_hopper_client_no_lookup);
         subject.gossip_acceptor = Box::new(gossip_acceptor);
@@ -2696,7 +2864,16 @@ mod tests {
         subject.handle_gossip_agrs(vec![], SocketAddr::from_str("1.2.3.4:1234").unwrap());
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let hopper_recording = hopper_recording_arc.lock().unwrap();
         let package = hopper_recording.get_record::<NoLookupIncipientCoresPackage>(0);
         assert_eq!(1, hopper_recording.len());
@@ -2782,14 +2959,23 @@ mod tests {
             replacement_database,
         });
         let (accountant, _, accountant_recording_arc) = make_recorder();
-        let system = System::new("neighborhood_does_not_start_accountant_if_no_route_can_be_made");
+        let system = System::new();
         let peer_actors = peer_actors_builder().accountant(accountant).build();
         bind_subject(&mut subject, peer_actors);
 
         subject.handle_gossip_agrs(vec![], SocketAddr::from_str("1.2.3.4:1234").unwrap());
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let accountant_recording = accountant_recording_arc.lock().unwrap();
         assert_eq!(accountant_recording.len(), 0);
         assert_eq!(subject.is_connected, false);
@@ -2806,14 +2992,23 @@ mod tests {
         });
         subject.is_connected = true;
         let (accountant, _, accountant_recording_arc) = make_recorder();
-        let system = System::new("neighborhood_does_not_start_accountant_if_no_route_can_be_made");
+        let system = System::new();
         let peer_actors = peer_actors_builder().accountant(accountant).build();
         bind_subject(&mut subject, peer_actors);
 
         subject.handle_gossip_agrs(vec![], SocketAddr::from_str("1.2.3.4:1234").unwrap());
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let accountant_recording = accountant_recording_arc.lock().unwrap();
         assert_eq!(accountant_recording.len(), 0);
         assert_eq!(subject.is_connected, true);
@@ -2842,14 +3037,23 @@ mod tests {
         ));
         subject.is_connected = false;
         let (accountant, _, accountant_recording_arc) = make_recorder();
-        let system = System::new("neighborhood_does_not_start_accountant_if_no_route_can_be_made");
+        let system = System::new();
         let peer_actors = peer_actors_builder().accountant(accountant).build();
         bind_subject(&mut subject, peer_actors);
 
         subject.handle_gossip_agrs(vec![], SocketAddr::from_str("1.2.3.4:1234").unwrap());
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let accountant_recording = accountant_recording_arc.lock().unwrap();
         assert_eq!(accountant_recording.len(), 1);
         assert_eq!(subject.is_connected, true);
@@ -3077,7 +3281,7 @@ mod tests {
         let (hopper, _, hopper_recording_arc) = make_recorder();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
 
-        let system = System::new("");
+        let system = System::new();
         subject.hopper = Some(peer_actors.hopper.from_hopper_client);
 
         subject.handle_gossip(
@@ -3086,7 +3290,16 @@ mod tests {
         );
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let hopper_recording = hopper_recording_arc.lock().unwrap();
         let package_1 = hopper_recording.get_record::<IncipientCoresPackage>(0);
@@ -3167,7 +3380,7 @@ mod tests {
         let (hopper, _, hopper_recording_arc) = make_recorder();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
 
-        let system = System::new("");
+        let system = System::new();
         subject.hopper = Some(peer_actors.hopper.from_hopper_client);
 
         subject.handle_gossip(
@@ -3176,7 +3389,16 @@ mod tests {
         );
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let hopper_recording = hopper_recording_arc.lock().unwrap();
         assert_eq!(hopper_recording.len(), 0);
@@ -3200,7 +3422,7 @@ mod tests {
         subject.gossip_acceptor = Box::new(gossip_acceptor);
         let (hopper, _, hopper_recording_arc) = make_recorder();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
-        let system = System::new("");
+        let system = System::new();
         subject.hopper_no_lookup = Some(peer_actors.hopper.from_hopper_client_no_lookup);
         let gossip_source = SocketAddr::from_str("8.6.5.4:8654").unwrap();
 
@@ -3211,7 +3433,16 @@ mod tests {
         );
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let hopper_recording = hopper_recording_arc.lock().unwrap();
         let package = hopper_recording.get_record::<NoLookupIncipientCoresPackage>(0);
         assert_eq!(1, hopper_recording.len());
@@ -3243,7 +3474,7 @@ mod tests {
         let subject_node = subject.neighborhood_database.root().clone();
         let (hopper, _, hopper_recording_arc) = make_recorder();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
-        let system = System::new("");
+        let system = System::new();
         subject.hopper = Some(peer_actors.hopper.from_hopper_client);
 
         subject.handle_gossip(
@@ -3252,7 +3483,16 @@ mod tests {
         );
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let hopper_recording = hopper_recording_arc.lock().unwrap();
         assert_eq!(0, hopper_recording.len());
     }
@@ -3269,7 +3509,7 @@ mod tests {
         let subject_node = subject.neighborhood_database.root().clone();
         let (hopper, _, hopper_recording_arc) = make_recorder();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
-        let system = System::new("");
+        let system = System::new();
         subject.hopper = Some(peer_actors.hopper.from_hopper_client);
 
         subject.handle_gossip(
@@ -3278,7 +3518,16 @@ mod tests {
         );
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let hopper_recording = hopper_recording_arc.lock().unwrap();
         assert_eq!(0, hopper_recording.len());
         let tlh = TestLogHandler::new();
@@ -3378,7 +3627,7 @@ mod tests {
         let hopper = Recorder::new();
         let this_node_inside = this_node.clone();
         thread::spawn(move || {
-            let system = System::new("");
+            let system = System::new();
             let subject = Neighborhood::new(
                 cryptde,
                 &bc_from_nc_plus(
@@ -3402,7 +3651,16 @@ mod tests {
             let sub = addr.recipient::<ExpiredCoresPackage<Gossip_0v1>>();
             sub.try_send(cores_package).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
         let tlh = TestLogHandler::new();
         tlh.await_log_containing(
@@ -3448,7 +3706,7 @@ mod tests {
             ),
         );
         let this_node = subject.neighborhood_database.root().clone();
-        let system = System::new("node_gossips_to_neighbors_on_startup");
+        let system = System::new();
         let addr: Addr<Neighborhood> = subject.start();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
         addr.try_send(BindMessage { peer_actors }).unwrap();
@@ -3457,7 +3715,16 @@ mod tests {
 
         sub.try_send(StartMessage {}).unwrap();
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let locked_recording = hopper_recording.lock().unwrap();
         let package_ref: &NoLookupIncipientCoresPackage = locked_recording.get_record(0);
         let neighbor_node_cryptde = CryptDENull::from(neighbor.public_key(), TEST_DEFAULT_CHAIN);
@@ -3496,7 +3763,7 @@ mod tests {
 
     #[test]
     fn neighborhood_removes_neighbor_when_directed_to() {
-        let system = System::new("neighborhood_removes_neighbor_when_directed_to");
+        let system = System::new();
         let hopper = Recorder::new();
         let mut subject = make_standard_subject();
         let n = &subject.neighborhood_database.root().clone();
@@ -3541,7 +3808,16 @@ mod tests {
         ));
         System::current().stop_with_code(0);
 
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert_eq!(None, unsuccessful_three_hop_route.wait().unwrap());
         assert_eq!(
             a.public_key(),
@@ -3565,7 +3841,7 @@ mod tests {
         let cryptde = main_cryptde();
         let (recorder, awaiter, recording_arc) = make_recorder();
         thread::spawn(move || {
-            let system = System::new("responds_with_none_when_initially_configured_with_no_data");
+            let system = System::new();
 
             let addr: Addr<Recorder> = recorder.start();
             let recipient: Recipient<DispatcherNodeQueryResponse> =
@@ -3588,7 +3864,16 @@ mod tests {
             })
             .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         awaiter.await_message_count(1);
@@ -3606,7 +3891,7 @@ mod tests {
         let consuming_wallet = Some(make_paying_wallet(b"consuming"));
         let (recorder, awaiter, recording_arc) = make_recorder();
         thread::spawn(move || {
-            let system = System::new("neighborhood_sends_node_query_response_with_none_when_key_query_matches_no_configured_data");
+            let system = System::new();
             let addr: Addr<Recorder> = recorder.start();
             let recipient: Recipient<DispatcherNodeQueryResponse> =
                 addr.recipient::<DispatcherNodeQueryResponse>();
@@ -3650,7 +3935,16 @@ mod tests {
             })
             .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         awaiter.await_message_count(1);
@@ -3677,7 +3971,7 @@ mod tests {
         };
         let context_a = context.clone();
         thread::spawn(move || {
-            let system = System::new("neighborhood_sends_node_query_response_with_result_when_key_query_matches_configured_data");
+            let system = System::new();
             let addr: Addr<Recorder> = recorder.start();
             let recipient = addr.recipient::<DispatcherNodeQueryResponse>();
             let mut subject = Neighborhood::new(
@@ -3710,7 +4004,16 @@ mod tests {
             })
             .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         awaiter.await_message_count(1);
@@ -3734,7 +4037,7 @@ mod tests {
         let consuming_wallet = Some(make_paying_wallet(b"consuming"));
         let (recorder, awaiter, recording_arc) = make_recorder();
         thread::spawn(move || {
-            let system = System::new("neighborhood_sends_node_query_response_with_none_when_ip_address_query_matches_no_configured_data");
+            let system = System::new();
             let addr: Addr<Recorder> = recorder.start();
             let recipient: Recipient<DispatcherNodeQueryResponse> =
                 addr.recipient::<DispatcherNodeQueryResponse>();
@@ -3777,7 +4080,16 @@ mod tests {
             })
             .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         awaiter.await_message_count(1);
@@ -3803,7 +4115,7 @@ mod tests {
         };
         let context_a = context.clone();
         thread::spawn(move || {
-            let system = System::new("neighborhood_sends_node_query_response_with_result_when_ip_address_query_matches_configured_data");
+            let system = System::new();
             let addr: Addr<Recorder> = recorder.start();
             let recipient: Recipient<DispatcherNodeQueryResponse> =
                 addr.recipient::<DispatcherNodeQueryResponse>();
@@ -3839,7 +4151,16 @@ mod tests {
             })
             .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         awaiter.await_message_count(1);
@@ -3997,7 +4318,7 @@ mod tests {
     fn handle_stream_shutdown_handles_socket_addr_with_unknown_ip() {
         init_test_logging();
         let (hopper, _, hopper_recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let unrecognized_node = make_node_record(3123, true);
         let unrecognized_node_addr = unrecognized_node.node_addr_opt().unwrap();
         let unrecognized_socket_addr = SocketAddr::new(
@@ -4016,7 +4337,16 @@ mod tests {
         });
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         assert_eq!(subject.neighborhood_database.keys().len(), 1);
         let hopper_recording = hopper_recording_arc.lock().unwrap();
@@ -4028,7 +4358,7 @@ mod tests {
     fn handle_stream_shutdown_handles_already_inactive_node() {
         init_test_logging();
         let (hopper, _, hopper_recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let gossip_neighbor_node = make_node_record(2456, true);
         let inactive_neighbor_node = make_node_record(3123, true);
         let inactive_neighbor_node_addr = inactive_neighbor_node.node_addr_opt().unwrap();
@@ -4064,7 +4394,16 @@ mod tests {
         });
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         assert_eq!(subject.neighborhood_database.keys().len(), 3);
         assert_eq!(
@@ -4083,7 +4422,7 @@ mod tests {
     fn handle_stream_shutdown_handles_existing_socket_addr() {
         init_test_logging();
         let (hopper, _, hopper_recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let gossip_neighbor_node = make_node_record(2456, true);
         let shutdown_neighbor_node = make_node_record(3123, true);
         let shutdown_neighbor_node_addr = shutdown_neighbor_node.node_addr_opt().unwrap();
@@ -4119,7 +4458,16 @@ mod tests {
         });
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         assert_eq!(subject.neighborhood_database.keys().len(), 3);
         assert_eq!(
@@ -4143,7 +4491,7 @@ mod tests {
     fn shutdown_instruction_generates_log() {
         running_test();
         init_test_logging();
-        let system = System::new("test");
+        let system = System::new();
         let subject = Neighborhood::new(
             main_cryptde(),
             &bc_from_nc_plus(
@@ -4172,7 +4520,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         assert_eq!(ui_gateway_recording.len(), 0);
         TestLogHandler::new()
@@ -4181,7 +4538,7 @@ mod tests {
 
     #[test]
     fn new_password_message_works() {
-        let system = System::new("test");
+        let system = System::new();
         let mut subject = make_standard_subject();
         let root_node_record = subject.neighborhood_database.root().clone();
         let set_past_neighbors_params_arc = Arc::new(Mutex::new(vec![]));
@@ -4221,7 +4578,16 @@ mod tests {
         };
         subject_addr.try_send(cores_package).unwrap();
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let set_past_neighbors_params = set_past_neighbors_params_arc.lock().unwrap();
         assert_eq!(set_past_neighbors_params[0].1, "borkety-bork");
     }
@@ -4422,7 +4788,7 @@ mod tests {
         A: Actor,
         M: Message<Result = NeighborhoodDatabase>,
     {
-        fn handle<R: ResponseChannel<M>>(self, _: &mut A::Context, tx: Option<R>) {
+        fn handle(self, ctx: &mut A::Context, tx: Option<OneshotSender<M::Result>>) {
             if let Some(tx) = tx {
                 tx.send(self);
             }

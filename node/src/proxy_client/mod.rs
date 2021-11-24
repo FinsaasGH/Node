@@ -354,6 +354,7 @@ mod tests {
     use std::sync::Arc;
     use std::sync::Mutex;
     use std::thread;
+    use std::time::SystemTime;
 
     fn dnss() -> Vec<SocketAddr> {
         vec![SocketAddr::from_str("8.8.8.8:53").unwrap()]
@@ -481,7 +482,7 @@ mod tests {
 
     #[test]
     fn bind_operates_properly() {
-        let system = System::new("bind_initializes_resolver_wrapper_properly");
+        let system = System::new();
         let resolver_wrapper = ResolverWrapperMock::new();
         let mut resolver_wrapper_new_parameters_arc: Arc<
             Mutex<Vec<(ResolverConfig, ResolverOpts)>>,
@@ -511,7 +512,16 @@ mod tests {
         subject_addr.try_send(BindMessage { peer_actors }).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let mut resolver_wrapper_new_parameters =
             resolver_wrapper_new_parameters_arc.lock().unwrap();
@@ -560,7 +570,7 @@ mod tests {
             request,
             0,
         );
-        let system = System::new("panics_if_hopper_is_unbound");
+        let system = System::new();
         let subject = ProxyClient::new(ProxyClientConfig {
             cryptde,
             dns_servers: dnss(),
@@ -572,7 +582,16 @@ mod tests {
         subject_addr.try_send(package).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     #[test]
@@ -582,7 +601,7 @@ mod tests {
         let stream_key = make_meaningless_stream_key();
         let stream_key_inner = stream_key.clone();
         thread::spawn(move || {
-            let system = System::new("logs_nonexistent_stream_key_during_dns_resolution_failure");
+            let system = System::new();
             let subject = ProxyClient::new(ProxyClientConfig {
                 cryptde,
                 dns_servers: vec![SocketAddr::from_str("1.1.1.1:53").unwrap()],
@@ -597,7 +616,16 @@ mod tests {
                 .try_send(DnsResolveFailure_0v1::new(stream_key_inner))
                 .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
         TestLogHandler::new().await_log_containing(
             &format!(
@@ -620,7 +648,7 @@ mod tests {
         let return_route_inner = return_route.clone();
         let originator_key_inner = originator_key.clone();
         thread::spawn(move || {
-            let system = System::new("forwards_dns_resolve_failed_to_hopper");
+            let system = System::new();
             let peer_actors = peer_actors_builder().hopper(hopper).build();
             let mut subject = ProxyClient::new(ProxyClientConfig {
                 cryptde,
@@ -651,7 +679,16 @@ mod tests {
                 .try_send(DnsResolveFailure_0v1::new(stream_key_inner))
                 .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         hopper_awaiter.await_message_count(1);
@@ -698,7 +735,7 @@ mod tests {
         );
         let hopper = Recorder::new();
 
-        let system = System::new("data_from_hopper_is_relayed_to_stream_handler_pool");
+        let system = System::new();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
         let mut process_package_parameters = Arc::new(Mutex::new(vec![]));
         let pool = Box::new(
@@ -723,7 +760,16 @@ mod tests {
         subject_addr.try_send(package).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let parameter = process_package_parameters.lock().unwrap().remove(0);
         assert_eq!(parameter, (request, Some(make_wallet("consuming")),));
     }
@@ -753,7 +799,7 @@ mod tests {
         );
         let hopper = Recorder::new();
 
-        let system = System::new("refuse_to_provide_exit_services_with_no_paying_wallet");
+        let system = System::new();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
         let mut process_package_parameters = Arc::new(Mutex::new(vec![]));
         let pool = Box::new(
@@ -778,7 +824,16 @@ mod tests {
         subject_addr.try_send(package).unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert_eq!(0, process_package_parameters.lock().unwrap().len());
         TestLogHandler::new().exists_log_containing(format!("WARN: ProxyClient: Refusing to provide exit services for CORES package with 12-byte payload without paying wallet").as_str());
     }
@@ -818,7 +873,7 @@ mod tests {
         );
         let hopper = Recorder::new();
 
-        let system = System::new("unparseable_request_results_in_log_and_no_response");
+        let system = System::new();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
         let mut process_package_parameters = Arc::new(Mutex::new(vec![]));
         let pool = Box::new(
@@ -843,7 +898,16 @@ mod tests {
         subject_addr.try_send(package).unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let parameter = process_package_parameters.lock().unwrap().remove(0);
         assert_eq!(parameter, (request, None,));
     }
@@ -855,7 +919,7 @@ mod tests {
         let (accountant, _, accountant_recording_arc) = make_recorder();
         let stream_key = make_meaningless_stream_key();
         let data: &[u8] = b"An honest politician is one who, when he is bought, will stay bought.";
-        let system = System::new("inbound_server_data_is_translated_to_cores_packages");
+        let system = System::new();
         let mut subject = ProxyClient::new(ProxyClientConfig {
             cryptde: main_cryptde(),
             dns_servers: vec![SocketAddr::from_str("8.7.6.5:4321").unwrap()],
@@ -916,7 +980,16 @@ mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let hopper_recording = hopper_recording_arc.lock().unwrap();
         assert_eq!(
             hopper_recording.get_record::<IncipientCoresPackage>(0),
@@ -991,7 +1064,7 @@ mod tests {
         let (accountant, _, accountant_recording_arc) = make_recorder();
         let stream_key = make_meaningless_stream_key();
         let data: &[u8] = b"An honest politician is one who, when he is bought, will stay bought.";
-        let system = System::new("inbound_server_data_is_translated_to_cores_packages");
+        let system = System::new();
         let mut subject = ProxyClient::new(ProxyClientConfig {
             cryptde: main_cryptde(),
             dns_servers: vec![SocketAddr::from_str("8.7.6.5:4321").unwrap()],
@@ -1022,7 +1095,16 @@ mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let accountant_recording = accountant_recording_arc.lock().unwrap();
         assert_eq!(accountant_recording.len(), 0);
         TestLogHandler::new().exists_log_containing(
@@ -1041,7 +1123,7 @@ mod tests {
         let (accountant, _, accountant_recording_arc) = make_recorder();
         let stream_key = make_meaningless_stream_key();
         let data: &[u8] = b"An honest politician is one who, when he is bought, will stay bought.";
-        let system = System::new("inbound_server_data_is_translated_to_cores_packages");
+        let system = System::new();
         let mut subject = ProxyClient::new(ProxyClientConfig {
             cryptde: main_cryptde(),
             dns_servers: vec![SocketAddr::from_str("8.7.6.5:4321").unwrap()],
@@ -1074,7 +1156,16 @@ mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let hopper_recording = hopper_recording_arc.lock().unwrap();
         assert_eq!(hopper_recording.len(), 0);
         let accountant_recording = accountant_recording_arc.lock().unwrap();
@@ -1089,7 +1180,7 @@ mod tests {
         let (accountant, _, accountant_recording_arc) = make_recorder();
         let stream_key = make_meaningless_stream_key();
         let data: &[u8] = b"An honest politician is one who, when he is bought, will stay bought.";
-        let system = System::new("new_return_route_overwrites_existing_return_route");
+        let system = System::new();
         let mut subject = ProxyClient::new(ProxyClientConfig {
             cryptde,
             dns_servers: vec![SocketAddr::from_str("8.7.6.5:4321").unwrap()],
@@ -1153,7 +1244,16 @@ mod tests {
             })
             .unwrap();
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let mut process_package_params = process_package_params_arc.lock().unwrap();
         let (actual_payload, paying_wallet_opt) = process_package_params.remove(0);
         assert_eq!(actual_payload, payload);

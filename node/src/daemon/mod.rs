@@ -89,7 +89,7 @@ pub trait Launcher {
 }
 
 #[derive(Message, PartialEq, Clone)]
-
+#[rtype(result = "")]
 pub struct DaemonBindMessage {
     pub to_ui_message_recipient: Recipient<NodeToUiMessage>, // for everybody to send UI-bound messages to
     pub from_ui_message_recipient: Recipient<NodeFromUiMessage>, // for the WebsocketSupervisor to send inbound UI messages to the UiGateway
@@ -457,6 +457,7 @@ mod tests {
     use std::collections::HashSet;
     use std::iter::FromIterator;
     use std::sync::{Arc, Mutex};
+    use std::time::SystemTime;
 
     struct LauncherMock {
         launch_params: Arc<Mutex<Vec<(HashMap<String, String>, Recipient<CrashNotification>)>>>,
@@ -602,7 +603,7 @@ mod tests {
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
         let verifier_tools = VerifierToolsMock::new().process_is_running_result(true);
         let setup_reporter = SetupReporterMock::new(); // will panic if called
-        let system = System::new("test");
+        let system = System::new();
         let mut subject = Daemon::new(Box::new(LauncherMock::new()));
         subject.verifier_tools = Box::new(verifier_tools);
         subject.setup_reporter = Box::new(setup_reporter);
@@ -629,7 +630,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let record = ui_gateway_recording
             .get_record::<NodeToUiMessage>(0)
@@ -667,7 +677,7 @@ mod tests {
             ("consuming-private-key", "secret value", Set),
         ]);
         let setup_reporter = SetupReporterMock::new().get_modified_setup_result(Ok(combined_setup));
-        let system = System::new("test");
+        let system = System::new();
         let mut subject = Daemon::new(Box::new(LauncherMock::new()));
         subject.verifier_tools = Box::new(verifier_tools);
         subject.setup_reporter = Box::new(setup_reporter);
@@ -696,7 +706,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let expected_combined_setup = vec![
             UiSetupResponseValue::new(
                 "consuming-private-key",
@@ -735,7 +754,7 @@ mod tests {
             "setup_judges_node_not_running_when_port_and_pid_are_none_without_checking_os",
         );
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let verifier_tools = VerifierToolsMock::new();
         let mut subject = Daemon::new(Box::new(LauncherMock::new()));
         subject.node_ui_port = None;
@@ -767,7 +786,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let record = ui_gateway_recording
             .get_record::<NodeToUiMessage>(0)
@@ -803,7 +831,7 @@ mod tests {
             "setup_judges_node_not_running_when_port_and_pid_are_set_but_os_says_different",
         );
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let verifier_tools = VerifierToolsMock::new().process_is_running_result(false); // only consulted once; second time, we already know
         let mut subject = Daemon::new(Box::new(LauncherMock::new()));
         subject.node_ui_port = Some(1234);
@@ -829,7 +857,16 @@ mod tests {
         subject_addr.try_send(msg.clone()).unwrap(); // accepted without asking because we already know Node is down
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let get_record = |idx: usize| {
             ui_gateway_recording
@@ -881,13 +918,22 @@ mod tests {
                 lame_setup,
                 ConfiguratorError::required("parameter", "message"),
             ))));
-        let system = System::new("test");
+        let system = System::new();
         subject.ui_gateway_sub = Some(ui_gateway.start().recipient());
 
         subject.handle_setup(47, 74, UiSetupRequest::new(vec![]));
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let message: &NodeToUiMessage = ui_gateway_recording.get_record(0);
         assert_eq!(
@@ -921,13 +967,22 @@ mod tests {
         subject.setup_reporter = Box::new(
             SetupReporterMock::new().get_modified_setup_result(Ok(modified_setup.clone())),
         );
-        let system = System::new("test");
+        let system = System::new();
         subject.ui_gateway_sub = Some(ui_gateway.start().recipient());
 
         subject.handle_setup(47, 74, UiSetupRequest::new(vec![]));
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let message: &NodeToUiMessage = ui_gateway_recording.get_record(0);
         assert_eq!(
@@ -966,13 +1021,22 @@ mod tests {
         .collect();
         subject.setup_reporter =
             Box::new(SetupReporterMock::new().get_modified_setup_result(Ok(incoming_setup)));
-        let system = System::new("test");
+        let system = System::new();
         subject.ui_gateway_sub = Some(ui_gateway.start().recipient());
 
         subject.handle_setup(47, 74, UiSetupRequest::new(vec![]));
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let message: &NodeToUiMessage = ui_gateway_recording.get_record(0);
         assert_eq!(
@@ -1016,13 +1080,22 @@ mod tests {
         subject.setup_reporter = Box::new(
             SetupReporterMock::new().get_modified_setup_result(Ok(modified_setup.clone())),
         );
-        let system = System::new("test");
+        let system = System::new();
         subject.ui_gateway_sub = Some(ui_gateway.start().recipient());
 
         subject.handle_setup(47, 74, UiSetupRequest::new(vec![]));
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let message: &NodeToUiMessage = ui_gateway_recording.get_record(0);
         assert_eq!(
@@ -1071,7 +1144,7 @@ mod tests {
                 redirect_ui_port: 5432,
             })));
         let verifier_tools = VerifierToolsMock::new();
-        let system = System::new("test");
+        let system = System::new();
         let mut subject = Daemon::new(Box::new(launcher));
         subject.params.insert(
             "db-password".to_string(),
@@ -1091,7 +1164,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let launch_params = launch_params_arc.lock().unwrap();
         assert_eq!(
             (*launch_params)
@@ -1126,7 +1208,7 @@ mod tests {
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
         let launcher = LauncherMock::new().launch_result(Ok(None));
         let verifier_tools = VerifierToolsMock::new();
-        let system = System::new("test");
+        let system = System::new();
         let mut subject = Daemon::new(Box::new(launcher));
         subject.params.insert(
             "db-password".to_string(),
@@ -1146,7 +1228,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         assert_eq!(ui_gateway_recording.len(), 0);
     }
@@ -1168,7 +1259,7 @@ mod tests {
             .process_is_running_result(false)
             .process_is_running_result(false)
             .process_is_running_result(false);
-        let system = System::new("test");
+        let system = System::new();
         let mut subject = Daemon::new(Box::new(launcher));
         subject.params.insert(
             "db-password".to_string(),
@@ -1212,7 +1303,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         // ------
         let record = ui_gateway_recording
@@ -1240,7 +1340,7 @@ mod tests {
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
         let launcher = LauncherMock::new().launch_result(Err("booga".to_string()));
         let verifier_tools = VerifierToolsMock::new();
-        let system = System::new("test");
+        let system = System::new();
         let mut subject = Daemon::new(Box::new(launcher));
         subject.params.insert(
             "db-password".to_string(),
@@ -1260,7 +1360,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let record = ui_gateway_recording
             .get_record::<NodeToUiMessage>(0)
@@ -1276,7 +1385,7 @@ mod tests {
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
         let launcher = LauncherMock::new().launch_result(Err("booga".to_string()));
         let verifier_tools = VerifierToolsMock::new().process_is_running_result(true);
-        let system = System::new("test");
+        let system = System::new();
         let mut subject = Daemon::new(Box::new(launcher));
         subject.params.insert(
             "db-password".to_string(),
@@ -1298,7 +1407,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let record = ui_gateway_recording
             .get_record::<NodeToUiMessage>(0)
@@ -1354,13 +1472,22 @@ mod tests {
             exit_code: None,
             stderr: None,
         };
-        let system = System::new("test");
+        let system = System::new();
         launch_params[0]
             .1
             .try_send(crashed_msg_to_daemon.clone())
             .unwrap();
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let gateway_recording = gateway_recording_arc.lock().unwrap();
         let start_msg = NodeToUiMessage {
             target: MessageTarget::ClientId(1234),
@@ -1380,7 +1507,7 @@ mod tests {
     #[test]
     fn accepts_shutdown_order_after_start_and_returns_redirect() {
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let process_is_running_params_arc = Arc::new(Mutex::new(vec![]));
         let verifier_tools = VerifierToolsMock::new()
             .process_is_running_params(&process_is_running_params_arc)
@@ -1403,7 +1530,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let record = ui_gateway_recording
             .get_record::<NodeToUiMessage>(0)
@@ -1444,7 +1580,7 @@ mod tests {
     fn accepts_unexpected_message_discovers_non_running_node_and_returns_conversational_answer_of_error(
     ) {
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let verifier_tools = VerifierToolsMock::new().process_is_running_result(false); // only consulted once; second time, we already know
         let mut subject = Daemon::new(Box::new(LauncherMock::new()));
         subject.node_ui_port = Some(7777);
@@ -1464,7 +1600,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let record = ui_gateway_recording
             .get_record::<NodeToUiMessage>(0)
@@ -1485,7 +1630,7 @@ mod tests {
         //fire and forget message that could be sent from UI to Node does not exist so far,
         //this is a touch of the future
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let verifier_tools = VerifierToolsMock::new().process_is_running_result(false);
         let mut subject = Daemon::new(Box::new(LauncherMock::new()));
         subject.node_ui_port = Some(7777);
@@ -1508,7 +1653,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let record = ui_gateway_recording
             .get_record::<NodeToUiMessage>(0)
@@ -1530,7 +1684,7 @@ mod tests {
     #[test]
     fn accepts_financials_request_before_start_and_returns_error() {
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let verifier_tools = VerifierToolsMock::new();
         let mut subject = Daemon::new(Box::new(LauncherMock::new()));
         subject.node_ui_port = None;
@@ -1556,7 +1710,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let record = ui_gateway_recording
             .get_record::<NodeToUiMessage>(0)
@@ -1574,7 +1737,7 @@ mod tests {
     #[test]
     fn accepts_crash_notification_when_not_in_setup_mode_and_sends_ui_notification() {
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let verifier_tools = VerifierToolsMock::new();
         let mut subject = Daemon::new(Box::new(LauncherMock::new()));
         subject.node_ui_port = Some(1234);
@@ -1599,7 +1762,16 @@ mod tests {
             })
             .unwrap();
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let record = ui_gateway_recording.get_record::<NodeToUiMessage>(0);
         assert_eq!(record.target, MessageTarget::AllClients);
@@ -1634,7 +1806,7 @@ mod tests {
     #[test]
     fn accepts_crash_notification_in_setup_mode_and_swallows() {
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let ui_gateway_sub = ui_gateway.start().recipient();
         let verifier_tools = VerifierToolsMock::new();
         let mut subject = Daemon::new(Box::new(LauncherMock::new()));
@@ -1650,7 +1822,16 @@ mod tests {
         });
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         assert_eq!(ui_gateway_recording.len(), 0);
     }

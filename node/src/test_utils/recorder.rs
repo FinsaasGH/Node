@@ -542,12 +542,13 @@ impl PeerActorsBuilder {
 
 #[cfg(test)]
 mod tests {
+    use std::time::SystemTime;
     use super::*;
     use actix::Message;
     use actix::System;
 
     #[derive(Debug, PartialEq, Message)]
-
+    #[rtype(result = "")]
     struct FirstMessageType {
         string: String,
     }
@@ -555,7 +556,7 @@ mod tests {
     recorder_message_handler!(FirstMessageType);
 
     #[derive(Debug, PartialEq, Message)]
-
+    #[rtype(result = "")]
     struct SecondMessageType {
         size: usize,
         flag: bool,
@@ -565,7 +566,7 @@ mod tests {
 
     #[test]
     fn recorder_records_different_messages() {
-        let system = System::new("test");
+        let system = System::new();
         let recorder = Recorder::new();
         let recording_arc = recorder.get_recording();
 
@@ -584,7 +585,16 @@ mod tests {
             .unwrap();
         System::current().stop_with_code(0);
 
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let recording = recording_arc.lock().unwrap();
         assert_eq!(

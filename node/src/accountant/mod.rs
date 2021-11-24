@@ -6,8 +6,8 @@ pub mod receivable_dao;
 #[cfg(test)]
 pub mod test_utils;
 
-use crate::accountant::payable_dao::{PayableAccount, PayableDaoFactory, Payment};
-use crate::accountant::receivable_dao::{ReceivableAccount, ReceivableDaoFactory};
+use crate::accountant::payable_dao::{PayableAccount, PayableDao, PayableDaoFactory, Payment};
+use crate::accountant::receivable_dao::{ReceivableAccount, ReceivableDao, ReceivableDaoFactory};
 use crate::banned_dao::{BannedDao, BannedDaoFactory};
 use crate::blockchain::blockchain_bridge::RetrieveTransactions;
 use crate::blockchain::blockchain_interface::{BlockchainError, Transaction};
@@ -27,7 +27,7 @@ use crate::sub_lib::logger::Logger;
 use crate::sub_lib::peer_actors::{BindMessage, StartMessage};
 use crate::sub_lib::utils::NODE_MAILBOX_CAPACITY;
 use crate::sub_lib::wallet::Wallet;
-use actix::{Actor, Addr, AsyncContext, Context, Handler, Message, Recipient};
+
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use masq_lib::messages::UiMessageError::UnexpectedMessage;
@@ -35,12 +35,10 @@ use masq_lib::messages::{FromMessageBody, ToMessageBody, UiFinancialsRequest, Ui
 use masq_lib::messages::{UiFinancialsResponse, UiPayableAccount, UiReceivableAccount};
 use masq_lib::ui_gateway::MessageTarget::ClientId;
 use masq_lib::ui_gateway::{NodeFromUiMessage, NodeToUiMessage};
-use payable_dao::PayableDao;
-use receivable_dao::ReceivableDao;
 use std::ops::Add;
 use std::thread;
 use std::time::{Duration, SystemTime};
-use futures::Future;
+use actix::{Actor, Addr, AsyncContext, Context, Handler, Message, Recipient};
 
 pub const CRASH_KEY: &str = "ACCOUNTANT";
 pub const DEFAULT_PAYABLE_SCAN_INTERVAL: u64 = 3600; // one hour
@@ -105,13 +103,13 @@ impl Actor for Accountant {
 }
 
 #[derive(Debug, Eq, Message, PartialEq)]
-
+#[rtype(result = "")]
 pub struct ReceivedPayments {
     payments: Vec<Transaction>,
 }
 
 #[derive(Debug, Eq, Message, PartialEq)]
-
+#[rtype(result = "")]
 pub struct SentPayments {
     pub payments: Vec<Result<Payment, BlockchainError>>,
 }
@@ -830,7 +828,7 @@ pub mod tests {
     use crate::test_utils::recorder::make_recorder;
     use crate::test_utils::recorder::peer_actors_builder;
     use crate::test_utils::recorder::Recorder;
-    use actix::System;
+    use actix::{Actor, System};
     use ethereum_types::BigEndianHash;
     use ethsign_crypto::Keccak256;
     use masq_lib::ui_gateway::MessagePath::{Conversation, FireAndForget};
@@ -1350,7 +1348,7 @@ pub mod tests {
                 },
             ])
             .total_result(98765432);
-        let system = System::new("test");
+        let system = System::new();
         let subject = make_subject(
             Some(bc_from_ac_plus_earning_wallet(
                 AccountantConfig {
@@ -1380,7 +1378,16 @@ pub mod tests {
         subject_addr.try_send(ui_message).unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let payable_top_records_parameters = payable_top_records_parameters_arc.lock().unwrap();
         assert_eq!(*payable_top_records_parameters, vec![(50001, 50002)]);
         let receivable_top_records_parameters =
@@ -1435,7 +1442,7 @@ pub mod tests {
     #[test]
     fn unexpected_ui_message_is_ignored() {
         init_test_logging();
-        let system = System::new("test");
+        let system = System::new();
         let subject = make_subject(
             Some(bc_from_ac_plus_earning_wallet(
                 AccountantConfig {
@@ -1466,7 +1473,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         assert_eq!(ui_gateway_recording.len(), 0);
         TestLogHandler::new().exists_log_containing(
@@ -1484,7 +1500,7 @@ pub mod tests {
             .payment_sent_parameters(payment_sent_parameters_inner)
             .payment_sent_result(Ok(()));
 
-        let system = System::new("accountant_calls_payable_dao_payment_sent_when_sent_payments");
+        let system = System::new();
 
         let accountant = make_subject(
             Some(bc_from_ac_plus_earning_wallet(
@@ -1518,7 +1534,16 @@ pub mod tests {
             .try_send(send_payments)
             .expect("unexpected actix error");
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let sent_payment_to = payment_sent_parameters.lock().unwrap();
         let actual = sent_payment_to.get(0).unwrap();
@@ -1532,7 +1557,7 @@ pub mod tests {
         init_test_logging();
         let payable_dao = PayableDaoMock::new().non_pending_payables_result(vec![]);
 
-        let system = System::new("accountant_calls_payable_dao_payment_sent_when_sent_payments");
+        let system = System::new();
 
         let accountant = make_subject(
             Some(bc_from_ac_plus_earning_wallet(
@@ -1560,7 +1585,16 @@ pub mod tests {
             .try_send(send_payments)
             .expect("unexpected actix error");
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         TestLogHandler::new().await_log_containing(
             r#"WARN: Accountant: Blockchain TransactionFailed("Payment attempt failed"). Please check your blockchain service URL configuration."#,
@@ -1603,9 +1637,7 @@ pub mod tests {
         let (accountant_mock, accountant_mock_awaiter, accountant_recording_arc) = make_recorder();
 
         thread::spawn(move || {
-            let system = System::new(
-                "accountant_reports_sent_payments_when_blockchain_bridge_reports_account_payable",
-            );
+            let system = System::new();
 
             let peer_actors = peer_actors_builder()
                 .blockchain_bridge(blockchain_bridge)
@@ -1630,7 +1662,16 @@ pub mod tests {
             send_bind_message!(accountant_subs, peer_actors);
             send_start_message!(accountant_subs);
 
-            system.run();
+            let now = SystemTime::now();
+            let _ = system.run();
+            match now.elapsed() {
+                Ok(elapsed) => println!(
+                    "Time taken: {}.{:06} seconds",
+                    elapsed.as_secs(),
+                    elapsed.subsec_micros()
+                ),
+                Err(e) => println!("An error occurred: {:?}", e),
+            }
         });
 
         accountant_mock_awaiter.await_message_count(1);
@@ -1679,9 +1720,7 @@ pub mod tests {
         let (accountant_mock, _, accountant_recording_arc) = make_recorder();
 
         thread::spawn(move || {
-            let system = System::new(
-                "accountant_reports_sent_payments_when_blockchain_bridge_reports_account_payable",
-            );
+            let system = System::new();
 
             let peer_actors = peer_actors_builder()
                 .blockchain_bridge(blockchain_bridge)
@@ -1706,7 +1745,16 @@ pub mod tests {
             send_bind_message!(subject_subs, peer_actors);
             send_start_message!(subject_subs);
 
-            system.run();
+            let now = SystemTime::now();
+            let _ = system.run();
+            match now.elapsed() {
+                Ok(elapsed) => println!(
+                    "Time taken: {}.{:06} seconds",
+                    elapsed.as_secs(),
+                    elapsed.subsec_micros()
+                ),
+                Err(e) => println!("An error occurred: {:?}", e),
+            }
         });
 
         TestLogHandler::new()
@@ -1740,9 +1788,7 @@ pub mod tests {
         );
 
         thread::spawn(move || {
-            let system = System::new(
-                "accountant_payment_received_scan_timer_triggers_scanning_for_payments",
-            );
+            let system = System::new();
             let payable_dao = PayableDaoMock::new().non_pending_payables_result(vec![]);
             let receivable_dao = ReceivableDaoMock::new()
                 .new_delinquencies_result(vec![])
@@ -1765,7 +1811,16 @@ pub mod tests {
             send_bind_message!(subject_subs, peer_actors);
             send_start_message!(subject_subs);
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         blockchain_bridge_awaiter.await_message_count(1);
@@ -1809,7 +1864,7 @@ pub mod tests {
         );
 
         thread::spawn(move || {
-            let system = System::new("accountant_logs_if_no_transactions_were_detected");
+            let system = System::new();
             let payable_dao = PayableDaoMock::new().non_pending_payables_result(vec![]);
             let receivable_dao = ReceivableDaoMock::new()
                 .new_delinquencies_result(vec![])
@@ -1832,7 +1887,16 @@ pub mod tests {
             send_bind_message!(subject_subs, peer_actors);
             send_start_message!(subject_subs);
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         blockchain_bridge_awaiter.await_message_count(1);
@@ -1872,7 +1936,7 @@ pub mod tests {
 
         thread::spawn(move || {
             let system =
-                System::new("accountant_logs_error_when_blockchain_bridge_responds_with_error");
+                System::new();
             let payable_dao = PayableDaoMock::new().non_pending_payables_result(vec![]);
             let receivable_dao = ReceivableDaoMock::new()
                 .new_delinquencies_result(vec![])
@@ -1894,7 +1958,16 @@ pub mod tests {
             send_bind_message!(subject_subs, peer_actors);
             send_start_message!(subject_subs);
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         blockchain_bridge_awaiter.await_message_count(1);
@@ -1937,7 +2010,7 @@ pub mod tests {
             None,
         );
 
-        let system = System::new("accountant_receives_new_payments_to_the_receivables_dao");
+        let system = System::new();
         let subject = accountant.start();
 
         subject
@@ -1946,7 +2019,16 @@ pub mod tests {
             })
             .expect("unexpected actix error");
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let more_money_received_params = more_money_received_params_arc.lock().unwrap();
         assert_eq!(1, more_money_received_params.len());
 
@@ -1971,7 +2053,7 @@ pub mod tests {
 
         thread::spawn(move || {
             let system =
-                System::new("accountant_payable_scan_timer_triggers_scanning_for_payables");
+                System::new();
             let config = bc_from_ac_plus_earning_wallet(
                 AccountantConfig {
                     payable_scan_interval: Duration::from_millis(100),
@@ -2010,7 +2092,16 @@ pub mod tests {
             send_bind_message!(subject_subs, peer_actors);
             send_start_message!(subject_subs);
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         blockchain_bridge_awaiter.await_message_count(1);
@@ -2022,7 +2113,7 @@ pub mod tests {
         init_test_logging();
         let (blockchain_bridge, _, _) = make_recorder();
 
-        let system = System::new("accountant_scans_after_startup");
+        let system = System::new();
         let config = bc_from_ac_plus_wallets(
             AccountantConfig {
                 payable_scan_interval: Duration::from_secs(1000),
@@ -2042,7 +2133,16 @@ pub mod tests {
         send_start_message!(subject_subs);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let tlh = TestLogHandler::new();
         tlh.await_log_containing("DEBUG: Accountant: Scanning for payables", 1000u64);
@@ -2097,9 +2197,7 @@ pub mod tests {
             .non_pending_payables_result(accounts.clone())
             .non_pending_payables_result(vec![]);
         let (blockchain_bridge, _, blockchain_bridge_recordings_arc) = make_recorder();
-        let system = System::new(
-            "scan_for_payables_message_does_not_trigger_payment_for_balances_below_the_curve",
-        );
+        let system = System::new();
         let blockchain_bridge_addr: Addr<Recorder> = blockchain_bridge.start();
         let report_accounts_payable_sub =
             blockchain_bridge_addr.recipient::<ReportAccountsPayable>();
@@ -2109,7 +2207,16 @@ pub mod tests {
         subject.scan_for_payables();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let blockchain_bridge_recordings = blockchain_bridge_recordings_arc.lock().unwrap();
         assert_eq!(blockchain_bridge_recordings.len(), 0);
@@ -2156,9 +2263,7 @@ pub mod tests {
             .report_accounts_payable_response(Ok(vec![]));
 
         thread::spawn(move || {
-            let system = System::new(
-                "scan_for_payables_message_triggers_payment_for_balances_over_the_curve",
-            );
+            let system = System::new();
 
             let peer_actors = peer_actors_builder()
                 .blockchain_bridge(blockchain_bridge)
@@ -2170,7 +2275,16 @@ pub mod tests {
             send_bind_message!(accountant_subs, peer_actors);
             send_start_message!(accountant_subs);
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         blockchain_bridge_awaiter.await_message_count(1);
@@ -2187,7 +2301,7 @@ pub mod tests {
         let ban_parameters_arc_inner = ban_parameters_arc.clone();
         let blockchain_bridge = Recorder::new().retrieve_transactions_response(Ok(vec![]));
         thread::spawn(move || {
-            let system = System::new("payment_received_scan_triggers_scan_for_delinquencies");
+            let system = System::new();
             let config = bc_from_ac_plus_earning_wallet(
                 AccountantConfig {
                     payable_scan_interval: Duration::from_secs(10_000),
@@ -2219,7 +2333,16 @@ pub mod tests {
             send_bind_message!(subject_subs, peer_actors);
             send_start_message!(subject_subs);
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         thread::sleep(Duration::from_millis(200));
@@ -2325,7 +2448,7 @@ pub mod tests {
             None,
             None,
         );
-        let system = System::new("report_routing_service_message_is_received");
+        let system = System::new();
         let subject_addr: Addr<Accountant> = subject.start();
         subject_addr
             .try_send(BindMessage {
@@ -2344,7 +2467,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let more_money_receivable_parameters = more_money_receivable_parameters_arc.lock().unwrap();
         assert_eq!(
             more_money_receivable_parameters[0],
@@ -2379,7 +2511,7 @@ pub mod tests {
             None,
             None,
         );
-        let system = System::new("report_routing_service_message_is_received");
+        let system = System::new();
         let subject_addr: Addr<Accountant> = subject.start();
         subject_addr
             .try_send(BindMessage {
@@ -2397,7 +2529,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert!(more_money_receivable_parameters_arc
             .lock()
             .unwrap()
@@ -2431,7 +2572,7 @@ pub mod tests {
             None,
             None,
         );
-        let system = System::new("report_routing_service_message_is_received");
+        let system = System::new();
         let subject_addr: Addr<Accountant> = subject.start();
         subject_addr
             .try_send(BindMessage {
@@ -2449,7 +2590,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert!(more_money_receivable_parameters_arc
             .lock()
             .unwrap()
@@ -2477,7 +2627,7 @@ pub mod tests {
             .more_money_payable_parameters(more_money_payable_parameters_arc.clone())
             .more_money_payable_result(Ok(()));
         let subject = make_subject(Some(config), Some(payable_dao_mock), None, None, None);
-        let system = System::new("report_routing_service_consumed_message_is_received");
+        let system = System::new();
         let subject_addr: Addr<Accountant> = subject.start();
         subject_addr
             .try_send(BindMessage {
@@ -2496,7 +2646,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let more_money_payable_parameters = more_money_payable_parameters_arc.lock().unwrap();
         assert_eq!(
             more_money_payable_parameters[0],
@@ -2524,7 +2683,7 @@ pub mod tests {
             .non_pending_payables_result(vec![])
             .more_money_payable_parameters(more_money_payable_parameters_arc.clone());
         let subject = make_subject(Some(config), Some(payable_dao_mock), None, None, None);
-        let system = System::new("report_routing_service_consumed_message_is_received");
+        let system = System::new();
         let subject_addr: Addr<Accountant> = subject.start();
         subject_addr
             .try_send(BindMessage {
@@ -2542,7 +2701,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert!(more_money_payable_parameters_arc.lock().unwrap().is_empty());
 
         TestLogHandler::new().exists_log_containing(&format!(
@@ -2567,7 +2735,7 @@ pub mod tests {
             .non_pending_payables_result(vec![])
             .more_money_payable_parameters(more_money_payable_parameters_arc.clone());
         let subject = make_subject(Some(config), Some(payable_dao_mock), None, None, None);
-        let system = System::new("report_routing_service_consumed_message_is_received");
+        let system = System::new();
         let subject_addr: Addr<Accountant> = subject.start();
         subject_addr
             .try_send(BindMessage {
@@ -2585,7 +2753,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert!(more_money_payable_parameters_arc.lock().unwrap().is_empty());
 
         TestLogHandler::new().exists_log_containing(&format!(
@@ -2616,7 +2793,7 @@ pub mod tests {
             None,
             None,
         );
-        let system = System::new("report_exit_service_provided_message_is_received");
+        let system = System::new();
         let subject_addr: Addr<Accountant> = subject.start();
         subject_addr
             .try_send(BindMessage {
@@ -2635,7 +2812,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let more_money_receivable_parameters = more_money_receivable_parameters_arc.lock().unwrap();
         assert_eq!(
             more_money_receivable_parameters[0],
@@ -2670,7 +2856,7 @@ pub mod tests {
             None,
             None,
         );
-        let system = System::new("report_exit_service_provided_message_is_received");
+        let system = System::new();
         let subject_addr: Addr<Accountant> = subject.start();
         subject_addr
             .try_send(BindMessage {
@@ -2688,7 +2874,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert!(more_money_receivable_parameters_arc
             .lock()
             .unwrap()
@@ -2722,7 +2917,7 @@ pub mod tests {
             None,
             None,
         );
-        let system = System::new("report_exit_service_provided_message_is_received");
+        let system = System::new();
         let subject_addr: Addr<Accountant> = subject.start();
         subject_addr
             .try_send(BindMessage {
@@ -2740,7 +2935,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert!(more_money_receivable_parameters_arc
             .lock()
             .unwrap()
@@ -2768,7 +2972,7 @@ pub mod tests {
             .more_money_payable_parameters(more_money_payable_parameters_arc.clone())
             .more_money_payable_result(Ok(()));
         let subject = make_subject(Some(config), Some(payable_dao_mock), None, None, None);
-        let system = System::new("report_exit_service_consumed_message_is_received");
+        let system = System::new();
         let subject_addr: Addr<Accountant> = subject.start();
         subject_addr
             .try_send(BindMessage {
@@ -2787,7 +2991,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let more_money_payable_parameters = more_money_payable_parameters_arc.lock().unwrap();
         assert_eq!(
             more_money_payable_parameters[0],
@@ -2816,7 +3029,7 @@ pub mod tests {
             .non_pending_payables_result(vec![])
             .more_money_payable_parameters(more_money_payable_parameters_arc.clone());
         let subject = make_subject(Some(config), Some(payable_dao_mock), None, None, None);
-        let system = System::new("report_exit_service_consumed_message_is_received");
+        let system = System::new();
         let subject_addr: Addr<Accountant> = subject.start();
         subject_addr
             .try_send(BindMessage {
@@ -2834,7 +3047,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert!(more_money_payable_parameters_arc.lock().unwrap().is_empty());
 
         TestLogHandler::new().exists_log_containing(&format!(
@@ -2859,7 +3081,7 @@ pub mod tests {
             .non_pending_payables_result(vec![])
             .more_money_payable_parameters(more_money_payable_parameters_arc.clone());
         let subject = make_subject(Some(config), Some(payable_dao_mock), None, None, None);
-        let system = System::new("report_exit_service_consumed_message_is_received");
+        let system = System::new();
         let subject_addr: Addr<Accountant> = subject.start();
         subject_addr
             .try_send(BindMessage {
@@ -2877,7 +3099,16 @@ pub mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         assert!(more_money_payable_parameters_arc.lock().unwrap().is_empty());
 
         TestLogHandler::new().exists_log_containing(&format!(

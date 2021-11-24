@@ -146,6 +146,7 @@ mod tests {
     use masq_lib::test_utils::utils::TEST_DEFAULT_CHAIN;
     use std::net::SocketAddr;
     use std::str::FromStr;
+    use std::time::SystemTime;
 
     #[test]
     #[should_panic(expected = "Hopper unbound: no RoutingService")]
@@ -176,7 +177,7 @@ mod tests {
             sequence_number: None,
             data: encrypted_package,
         };
-        let system = System::new("panics_if_routing_service_is_unbound");
+        let system = System::new();
         let subject = Hopper::new(HopperConfig {
             main_cryptde,
             alias_cryptde,
@@ -189,7 +190,16 @@ mod tests {
         subject_addr.try_send(inbound_client_data).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     #[test]
@@ -216,7 +226,7 @@ mod tests {
             &main_cryptde.public_key(),
         )
         .unwrap();
-        let system = System::new("panics_if_consuming_service_is_unbound");
+        let system = System::new();
         let subject = Hopper::new(HopperConfig {
             main_cryptde,
             alias_cryptde,
@@ -229,6 +239,15 @@ mod tests {
         subject_addr.try_send(incipient_package).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 }

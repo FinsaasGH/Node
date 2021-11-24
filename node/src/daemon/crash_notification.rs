@@ -17,7 +17,7 @@ trait Recognizer: Sync {
 }
 
 #[derive(Message, Clone, Debug, PartialEq)]
-
+#[rtype(result = "")]
 pub struct CrashNotification {
     pub process_id: u32,
     pub exit_code: Option<i32>,

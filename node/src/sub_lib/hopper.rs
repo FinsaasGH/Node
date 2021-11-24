@@ -31,7 +31,7 @@ use std::net::SocketAddr;
 /// of PublicKeys destined to be looked up in the database by the Dispatcher.
 /// This struct can be used only for single-hop traffic.
 #[derive(Clone, Debug, PartialEq, Message)]
-
+#[rtype(result = "")]
 pub struct NoLookupIncipientCoresPackage {
     pub public_key: PublicKey,
     pub node_addr: NodeAddr,
@@ -59,7 +59,7 @@ impl NoLookupIncipientCoresPackage {
 
 /// New CORES package about to be sent to the Hopper and thence put on the MASQ Network
 #[derive(Clone, Debug, PartialEq, Message)]
-
+#[rtype(result = "")]
 pub struct IncipientCoresPackage {
     pub route: Route,
     pub payload: CryptData,
@@ -95,7 +95,7 @@ impl IncipientCoresPackage {
 
 /// CORES package that has traversed the MASQ Network and is arriving at its destination
 #[derive(Clone, Debug, PartialEq, Message)]
-
+#[rtype(result = "")]
 pub struct ExpiredCoresPackage<T> {
     pub immediate_neighbor: SocketAddr,
     pub paying_wallet: Option<Wallet>,

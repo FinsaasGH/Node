@@ -537,6 +537,7 @@ mod tests {
     use masq_lib::test_utils::utils::TEST_DEFAULT_CHAIN;
     use std::net::SocketAddr;
     use std::str::FromStr;
+    use std::time::SystemTime;
 
     #[test]
     fn dns_resolution_failures_are_reported_to_the_proxy_server() {
@@ -568,7 +569,7 @@ mod tests {
         };
         let (proxy_server, _, proxy_server_recording) = make_recorder();
 
-        let system = System::new("dns_resolution_failures_are_reported_to_the_proxy_server");
+        let system = System::new();
         let peer_actors = peer_actors_builder().proxy_server(proxy_server).build();
         let subject = RoutingService::new(
             main_cryptde,
@@ -589,7 +590,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let recordings = proxy_server_recording.lock().unwrap();
         let message = recordings.get_record::<ExpiredCoresPackage<DnsResolveFailure_0v1>>(0);
@@ -760,7 +770,7 @@ mod tests {
             data: data_enc.into(),
         };
 
-        let system = System::new("converts_live_message_to_expired_for_proxy_client");
+        let system = System::new();
         let peer_actors = peer_actors_builder().proxy_client(component).build();
         let subject = RoutingService::new(
             main_cryptde,
@@ -781,7 +791,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let component_recording = component_recording_arc.lock().unwrap();
         let record =
             component_recording.get_record::<ExpiredCoresPackage<ClientRequestPayload_0v1>>(0);
@@ -830,7 +849,7 @@ mod tests {
             data: data_enc.into(),
         };
 
-        let system = System::new("converts_live_message_to_expired_for_proxy_client");
+        let system = System::new();
         let peer_actors = peer_actors_builder().build();
         let subject = RoutingService::new(
             main_cryptde,
@@ -851,7 +870,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let tlh = TestLogHandler::new();
         tlh.exists_no_log_containing("Couldn't decode CORES package in 8-byte buffer");
         tlh.exists_log_containing("WARN: RoutingService: Received CORES package from 1.2.3.4:5678 for Proxy Client, but Proxy Client isn't running");
@@ -886,7 +914,7 @@ mod tests {
             data: lcp_enc.into(),
         };
 
-        let system = System::new("converts_live_message_to_expired_for_proxy_server");
+        let system = System::new();
         let peer_actors = peer_actors_builder().proxy_server(component).build();
         let subject = RoutingService::new(
             main_cryptde,
@@ -907,7 +935,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let component_recording = component_recording_arc.lock().unwrap();
         let record =
             component_recording.get_record::<ExpiredCoresPackage<ClientResponsePayload_0v1>>(0);
@@ -964,7 +1001,7 @@ mod tests {
             data: data_enc.into(),
         };
 
-        let system = System::new("converts_live_gossip_message_to_expired_for_neighborhood");
+        let system = System::new();
         let peer_actors = peer_actors_builder().neighborhood(component).build();
         let subject = RoutingService::new(
             main_cryptde,
@@ -985,7 +1022,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let component_recording = component_recording_arc.lock().unwrap();
         let record = component_recording.get_record::<ExpiredCoresPackage<Gossip_0v1>>(0);
         let expected_ecp = lcp_a
@@ -1038,7 +1084,7 @@ mod tests {
         };
 
         let system =
-            System::new("converts_live_gossip_failure_message_to_expired_for_neighborhood");
+            System::new();
         let peer_actors = peer_actors_builder().neighborhood(component).build();
         let subject = RoutingService::new(
             cryptde,
@@ -1059,7 +1105,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let component_recording = component_recording_arc.lock().unwrap();
         let record = component_recording.get_record::<ExpiredCoresPackage<GossipFailure_0v1>>(0);
         let expected_ecp = lcp
@@ -1114,7 +1169,7 @@ mod tests {
             data: data_enc.into(),
         };
 
-        let system = System::new("passes_on_inbound_client_data_not_meant_for_this_node");
+        let system = System::new();
         let peer_actors = peer_actors_builder()
             .dispatcher(dispatcher)
             .accountant(accountant)
@@ -1138,7 +1193,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let dispatcher_recording = dispatcher_recording_arc.lock().unwrap();
         let record = dispatcher_recording.get_record::<TransmitDataMsg>(0);
@@ -1204,9 +1268,7 @@ mod tests {
             data: data_enc.into(),
         };
 
-        let system = System::new(
-            "reprocesses_inbound_client_data_meant_for_this_node_and_destined_for_hopper",
-        );
+        let system = System::new();
         let peer_actors = peer_actors_builder().hopper(hopper).build();
         let subject = RoutingService::new(
             main_cryptde,
@@ -1227,7 +1289,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let hopper_recording = hopper_recording_arc.lock().unwrap();
         let record = hopper_recording.get_record::<InboundClientData>(0);
@@ -1283,9 +1354,7 @@ mod tests {
             sequence_number: None,
             data: data_enc.into(),
         };
-        let system = System::new(
-            "route_logs_and_ignores_cores_package_that_demands_routing_without_paying_wallet",
-        );
+        let system = System::new();
         let (proxy_client, _, proxy_client_recording_arc) = make_recorder();
         let (proxy_server, _, proxy_server_recording_arc) = make_recorder();
         let (neighborhood, _, neighborhood_recording_arc) = make_recorder();
@@ -1317,7 +1386,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new().exists_log_matching(
             "WARN: RoutingService: Refusing to route Live CORES package with \\d+-byte payload without paying wallet",
         );
@@ -1384,9 +1462,7 @@ mod tests {
             sequence_number: None,
             data: data_enc.into(),
         };
-        let system = System::new(
-            "route_logs_and_ignores_cores_package_that_demands_proxy_client_routing_with_paying_wallet_that_cant_pay",
-        );
+        let system = System::new();
         let (proxy_client, _, proxy_client_recording_arc) = make_recorder();
         let (proxy_server, _, proxy_server_recording_arc) = make_recorder();
         let (neighborhood, _, neighborhood_recording_arc) = make_recorder();
@@ -1418,7 +1494,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new().exists_log_matching(
             "WARN: RoutingService: Refusing to route Expired CORES package with \\d+-byte payload without proof of 0x0a26dc9ebb2124baf1efe9d460f1ce59cd7944bd paying wallet ownership.",
         );
@@ -1480,9 +1565,7 @@ mod tests {
             encodex(main_cryptde, &destination_key, &payload).unwrap(),
         );
 
-        let system = System::new(
-            "route_logs_and_ignores_cores_package_that_demands_hopper_routing_with_paying_wallet_that_cant_pay",
-        );
+        let system = System::new();
         let (proxy_client, _, proxy_client_recording_arc) = make_recorder();
         let (proxy_server, _, proxy_server_recording_arc) = make_recorder();
         let (neighborhood, _, neighborhood_recording_arc) = make_recorder();
@@ -1518,7 +1601,16 @@ mod tests {
         );
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new().exists_log_matching(
             "WARN: RoutingService: Refusing to route Live CORES package with \\d+-byte payload without proof of 0x0a26dc9ebb2124baf1efe9d460f1ce59cd7944bd paying wallet ownership.",
         );
@@ -1563,7 +1655,7 @@ mod tests {
             sequence_number: None,
             data: data_enc.into(),
         };
-        let system = System::new("test");
+        let system = System::new();
         let peer_actors = peer_actors_builder()
             .dispatcher(dispatcher)
             .accountant(accountant)
@@ -1587,7 +1679,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let dispatcher_recording = dispatcher_recording_arc.lock().unwrap();
         assert_eq!(dispatcher_recording.len(), 0);
@@ -1634,7 +1735,7 @@ mod tests {
             sequence_number: None,
             data: data_enc.into(),
         };
-        let system = System::new("test");
+        let system = System::new();
         let peer_actors = peer_actors_builder()
             .dispatcher(dispatcher)
             .accountant(accountant)
@@ -1658,7 +1759,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let dispatcher_recording = dispatcher_recording_arc.lock().unwrap();
         assert_eq!(dispatcher_recording.len(), 0);
@@ -1678,7 +1788,7 @@ mod tests {
             sequence_number: None,
             data: vec![],
         };
-        let system = System::new("consume_logs_error_when_given_bad_input_data");
+        let system = System::new();
         let (proxy_client, _, proxy_client_recording_arc) = make_recorder();
         let (proxy_server, _, proxy_server_recording_arc) = make_recorder();
         let (neighborhood, _, neighborhood_recording_arc) = make_recorder();
@@ -1708,7 +1818,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new().exists_log_containing(
             "ERROR: RoutingService: Couldn't decode CORES package in 0-byte buffer from 1.2.3.4:5678: DecryptionError(EmptyData)",
         );
@@ -1736,7 +1855,7 @@ mod tests {
             sequence_number: None,
             data: data_enc.into(),
         };
-        let system = System::new("consume_logs_error_when_given_bad_input_data");
+        let system = System::new();
         let (proxy_client, _, proxy_client_recording_arc) = make_recorder();
         let (proxy_server, _, proxy_server_recording_arc) = make_recorder();
         let (neighborhood, _, neighborhood_recording_arc) = make_recorder();
@@ -1766,7 +1885,16 @@ mod tests {
         subject.route(inbound_client_data);
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new().exists_log_containing(
             "ERROR: RoutingService: Invalid 67-byte CORES package: RoutingError(EmptyRoute)",
         );
@@ -1839,12 +1967,21 @@ mod tests {
             MessageType::Gossip(VersionedData::test_new(dv!(0, 0), vec![])),
             0,
         );
-        let system = System::new("route_expired_package_handles_unmigratable_gossip");
+        let system = System::new();
 
         subject.route_expired_package(Component::Neighborhood, expired_package, true);
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let neighborhood_recording = neighborhood_recording_arc.lock().unwrap();
         assert_eq!(neighborhood_recording.len(), 0);
         TestLogHandler::new().exists_log_containing(
@@ -1879,12 +2016,21 @@ mod tests {
             MessageType::ClientRequest(VersionedData::test_new(dv!(0, 0), vec![])),
             0,
         );
-        let system = System::new("route_expired_package_handles_unmigratable_client_request");
+        let system = System::new();
 
         subject.route_expired_package(Component::ProxyClient, expired_package, true);
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let proxy_client_recording = proxy_client_recording_arc.lock().unwrap();
         assert_eq!(proxy_client_recording.len(), 0);
         TestLogHandler::new().exists_log_containing(
@@ -1919,12 +2065,21 @@ mod tests {
             MessageType::ClientResponse(VersionedData::test_new(dv!(0, 0), vec![])),
             0,
         );
-        let system = System::new("route_expired_package_handles_unmigratable_client_response");
+        let system = System::new();
 
         subject.route_expired_package(Component::ProxyServer, expired_package, true);
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let proxy_server_recording = proxy_server_recording_arc.lock().unwrap();
         assert_eq!(proxy_server_recording.len(), 0);
         TestLogHandler::new().exists_log_containing(
@@ -1959,12 +2114,21 @@ mod tests {
             MessageType::DnsResolveFailed(VersionedData::test_new(dv!(0, 0), vec![])),
             0,
         );
-        let system = System::new("route_expired_package_handles_unmigratable_dns_resolve_failure");
+        let system = System::new();
 
         subject.route_expired_package(Component::ProxyServer, expired_package, true);
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let hopper_recording = hopper_recording_arc.lock().unwrap();
         assert_eq!(hopper_recording.len(), 0);
         TestLogHandler::new().exists_log_containing(
@@ -1999,12 +2163,21 @@ mod tests {
             MessageType::GossipFailure(VersionedData::test_new(dv!(0, 0), vec![])),
             0,
         );
-        let system = System::new("route_expired_package_handles_unmigratable_gossip_failure");
+        let system = System::new();
 
         subject.route_expired_package(Component::Neighborhood, expired_package, true);
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let neighborhood_recording = neighborhood_recording_arc.lock().unwrap();
         assert_eq!(neighborhood_recording.len(), 0);
         TestLogHandler::new().exists_log_containing(

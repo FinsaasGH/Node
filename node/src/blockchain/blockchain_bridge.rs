@@ -206,7 +206,7 @@ mod tests {
     use crate::test_utils::pure_test_utils::make_default_persistent_configuration;
     use crate::test_utils::recorder::peer_actors_builder;
     use crate::test_utils::{make_paying_wallet, make_wallet};
-    use actix::Addr;
+    use actix::{Addr, ContextFutureSpawner};
     use actix::System;
     use ethsign::SecretKey;
     use ethsign_crypto::Keccak256;
@@ -238,7 +238,7 @@ mod tests {
             Box::new(make_default_persistent_configuration()),
         );
 
-        let system = System::new("blockchain_bridge_receives_bind_message");
+        let system = System::new();
         let addr: Addr<BlockchainBridge> = subject.start();
 
         addr.try_send(BindMessage {
@@ -247,7 +247,16 @@ mod tests {
         .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new().exists_log_containing(&format!(
             "DEBUG: BlockchainBridge: Received BindMessage; consuming wallet address {}",
             consuming_wallet
@@ -264,7 +273,7 @@ mod tests {
             Box::new(PersistentConfigurationMock::default()),
         );
 
-        let system = System::new("blockchain_bridge_receives_bind_message");
+        let system = System::new();
         let addr: Addr<BlockchainBridge> = subject.start();
 
         addr.try_send(BindMessage {
@@ -273,7 +282,16 @@ mod tests {
         .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new().exists_log_containing(
             "DEBUG: BlockchainBridge: Received BindMessage; no consuming wallet address specified",
         );
@@ -365,7 +383,7 @@ mod tests {
 
     #[test]
     fn ask_me_about_my_transactions() {
-        let system = System::new("ask_me_about_my_transactions");
+        let system = System::new();
         let block_no = 37;
         let expected_results = vec![Transaction {
             block_number: 42u64,
@@ -392,7 +410,16 @@ mod tests {
             recipient: wallet.clone(),
         });
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let retrieve_transactions_parameters = retrieve_transactions_parameters.lock().unwrap();
         assert_eq!((block_no, wallet), retrieve_transactions_parameters[0]);
@@ -404,7 +431,7 @@ mod tests {
     #[test]
     fn report_accounts_payable_sends_transactions_to_blockchain_interface() {
         let system =
-            System::new("report_accounts_payable_sends_transactions_to_blockchain_interface");
+            System::new();
 
         let blockchain_interface_mock = BlockchainInterfaceMock::default()
             .get_transaction_count_result(Ok(U256::from(1)))
@@ -447,7 +474,16 @@ mod tests {
             ],
         });
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         assert_eq!(
             send_parameters.lock().unwrap()[0],
@@ -627,7 +663,7 @@ mod tests {
 
     #[test]
     fn cant_be_crashed_if_key_doesnt_match() {
-        let system = System::new("test");
+        let system = System::new();
         let mut config = BootstrapperConfig::new();
         config.crash_point = CrashPoint::Message;
         let subject = BlockchainBridge::new(
@@ -644,14 +680,23 @@ mod tests {
         .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         // no panic: test passes
     }
 
     #[test]
     fn cant_be_crashed_if_not_crashable() {
         init_test_logging();
-        let system = System::new("test");
+        let system = System::new();
         let subject = BlockchainBridge::new(
             &BootstrapperConfig::new(),
             Box::new(BlockchainInterfaceMock::default()),
@@ -666,7 +711,16 @@ mod tests {
         .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new().exists_log_containing(
             "INFO: BlockchainBridge: Rejected crash attempt: 'panic message'",
         );
@@ -675,7 +729,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "panic message")]
     fn can_be_crashed() {
-        let system = System::new("test");
+        let system = System::new();
         let mut config = BootstrapperConfig::new();
         config.crash_point = CrashPoint::Message;
         let subject = BlockchainBridge::new(
@@ -692,7 +746,16 @@ mod tests {
         .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     fn bc_from_wallet(consuming_wallet: Option<Wallet>) -> BootstrapperConfig {

@@ -210,7 +210,7 @@ mod tests {
     use std::process::ExitStatus;
     use std::sync::{Arc, Mutex};
     use std::thread;
-    use std::time::Duration;
+    use std::time::{Duration, SystemTime};
 
     struct ChildWrapperMock {
         wait_latency_ms: u64,
@@ -347,14 +347,23 @@ mod tests {
         subject.spawn_wrapper = Box::new(spawn_wrapper);
         let (result_tx, result_rx) = unbounded();
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
             let crashed_recipient = daemon.start().recipient();
 
             result_tx
                 .send(subject.exec(inner_params, crashed_recipient))
                 .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
         let result = result_rx.recv().unwrap();
         assert_eq!(result, Ok(1234));
@@ -404,14 +413,23 @@ mod tests {
         subject.spawn_wrapper = Box::new(spawn_wrapper);
         let (result_tx, result_rx) = unbounded();
         thread::spawn(move || {
-            let system = System::new("test");
+            let system = System::new();
             let crashed_recipient = daemon.start().recipient();
 
             result_tx
                 .send(subject.exec(inner_params, crashed_recipient))
                 .unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
         let result = result_rx.recv().unwrap();
         assert_eq!(result, Ok(1234));
@@ -432,7 +450,7 @@ mod tests {
     #[test]
     fn launch_calls_execer_and_verifier_and_returns_success() {
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
-        let system = System::new("test");
+        let system = System::new();
         let crashed_recipient = ui_gateway.start().recipient();
         let exec_params_arc = Arc::new(Mutex::new(vec![]));
         let execer = ExecerMock::new()
@@ -482,7 +500,16 @@ mod tests {
         };
         (*exec_params)[0].1.try_send(msg.clone()).unwrap();
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         assert_eq!(
             *ui_gateway_recording.get_record::<CrashNotification>(0),

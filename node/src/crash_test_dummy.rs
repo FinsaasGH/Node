@@ -1,7 +1,8 @@
 // Copyright (c) 2019, MASQ (https://masq.ai) and/or its affiliates. All rights reserved.
 
+use tokio::prelude::Async;
 use crate::sub_lib::logger::Logger;
-use futures::Async;
+
 use masq_lib::crash_point::CrashPoint;
 use tokio::prelude::future::Future;
 

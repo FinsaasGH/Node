@@ -157,7 +157,7 @@ mod tests {
     use std::str::FromStr;
     use std::sync::Arc;
     use std::thread;
-    use std::time::Duration;
+    use std::time::{Duration, SystemTime};
     use tokio;
     use tokio::net::TcpStream;
     use tokio::reactor::Handle;
@@ -286,11 +286,20 @@ mod tests {
 
         let (tx, rx) = unbounded();
         thread::spawn(move || {
-            let system = System::new("handles_connection_errors");
+            let system = System::new();
             let add_stream_sub = start_recorder(stream_handler_pool);
             tx.send(add_stream_sub)
                 .expect("Unable to send add_stream_sub to test");
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         let port = find_free_port();
@@ -373,10 +382,19 @@ mod tests {
 
         let (tx, rx) = unbounded();
         thread::spawn(move || {
-            let system = System::new("converts_connections_into_connection_infos");
+            let system = System::new();
             let add_stream_sub = start_recorder(stream_handler_pool);
             tx.send(add_stream_sub).expect("Internal Error");
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         let port = find_free_port();

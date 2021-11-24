@@ -125,6 +125,7 @@ mod tests {
     use masq_lib::ui_gateway::{MessageBody, MessageTarget};
     use masq_lib::utils::find_free_port;
     use std::sync::{Arc, Mutex};
+    use std::time::SystemTime;
 
     #[test]
     fn inbound_ui_message_is_disseminated_properly() {
@@ -142,7 +143,7 @@ mod tests {
         let subject = UiGateway::new(&UiGatewayConfig {
             ui_port: find_free_port(),
         });
-        let system = System::new("test");
+        let system = System::new();
         let subject_addr: Addr<UiGateway> = subject.start();
         let peer_actors = peer_actors_builder()
             .accountant(accountant)
@@ -168,7 +169,16 @@ mod tests {
         subject_addr.try_send(msg.clone()).unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let did_receive = |recording_arc: Arc<Mutex<Recording>>| {
             let recording = recording_arc.lock().unwrap();
             assert_eq!(recording.get_record::<NodeFromUiMessage>(0), &msg);
@@ -197,7 +207,7 @@ mod tests {
         let mut subject = UiGateway::new(&UiGatewayConfig {
             ui_port: find_free_port(),
         });
-        let system = System::new("test");
+        let system = System::new();
         subject.websocket_supervisor = Some(Box::new(websocket_supervisor));
         subject.incoming_message_recipients =
             vec![accountant.start().recipient::<NodeFromUiMessage>()];
@@ -214,7 +224,16 @@ mod tests {
         subject_addr.try_send(msg.clone()).unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let accountant_recording = accountant_recording_arc.lock().unwrap();
         assert_eq!(accountant_recording.len(), 0);
         let send_parameters = send_msg_parameters_arc.lock().unwrap();

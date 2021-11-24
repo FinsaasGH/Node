@@ -41,12 +41,12 @@ use crate::sub_lib::ttl_hashmap::TtlHashMap;
 use crate::sub_lib::utils::NODE_MAILBOX_CAPACITY;
 use crate::sub_lib::wallet::Wallet;
 
+use actix::{Actor, ActorFutureExt, Addr, Context, Handler, Recipient};
 use pretty_hex::PrettyHex;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::rc::Rc;
 use std::time::Duration;
-use actix::{Actor, Addr, Context, Handler, Recipient};
 use tokio::prelude::Future;
 
 pub const CRASH_KEY: &str = "PROXYSERVER";
@@ -987,6 +987,7 @@ mod tests {
     use std::str::FromStr;
     use std::sync::{Arc, Mutex, MutexGuard};
     use std::thread;
+    use std::time::SystemTime;
 
     const STANDARD_CONSUMING_WALLET_BALANCE: i64 = 0;
 
@@ -1157,7 +1158,7 @@ mod tests {
             let stream_key_factory = StreamKeyFactoryMock::new()
                 .make_parameters(&make_parameters_arc)
                 .make_result(stream_key);
-            let system = System::new("proxy_server_receives_http_request_from_dispatcher_then_sends_cores_package_to_hopper");
+            let system = System::new();
             let mut subject = ProxyServer::new(
                 main_cryptde,
                 alias_cryptde,
@@ -1176,7 +1177,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         hopper_awaiter.await_message_count(1);
@@ -1260,9 +1270,7 @@ mod tests {
             let stream_key_factory = StreamKeyFactoryMock::new()
                 .make_parameters(&make_parameters_arc_thread)
                 .make_result(stream_key);
-            let system = System::new(
-                "proxy_server_receives_connect_responds_with_ok_and_stores_stream_key_and_hostname",
-            );
+            let system = System::new();
             let mut subject = ProxyServer::new(
                 main_cryptde,
                 alias_cryptde,
@@ -1281,7 +1289,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
             subject_addr.try_send(tunnelled_msg).unwrap();
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         hopper_awaiter.await_message_count(1);
@@ -1310,7 +1327,7 @@ mod tests {
     #[test]
     fn handle_client_response_payload_increments_sequence_number_when_browser_proxy_sequence_offset_is_true(
     ) {
-        let system = System::new("handle_client_response_payload_increments_sequence_number_when_browser_proxy_sequence_offset_is_true");
+        let system = System::new();
         let (dispatcher_mock, _, dispatcher_log_arc) = make_recorder();
         let cryptde = main_cryptde();
         let mut subject = ProxyServer::new(
@@ -1374,7 +1391,16 @@ mod tests {
             .unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let dispatcher_recording = dispatcher_log_arc.lock().unwrap();
         let record = dispatcher_recording.get_record::<TransmitDataMsg>(1);
@@ -1414,9 +1440,7 @@ mod tests {
             let stream_key_factory = StreamKeyFactoryMock::new()
                 .make_parameters(&stream_key_parameters_arc_thread)
                 .make_result(stream_key);
-            let system = System::new(
-                "proxy_server_receives_connect_responds_with_ok_and_stores_stream_key_and_hostname",
-            );
+            let system = System::new();
             let mut subject = ProxyServer::new(
                 cryptde,
                 alias_cryptde(),
@@ -1434,7 +1458,16 @@ mod tests {
             subject_addr.try_send(BindMessage { peer_actors }).unwrap();
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         thread::sleep(Duration::from_millis(500));
@@ -1484,9 +1517,7 @@ mod tests {
             let stream_key_factory = StreamKeyFactoryMock::new()
                 .make_parameters(&stream_key_parameters_arc_thread)
                 .make_result(stream_key);
-            let system = System::new(
-                "proxy_server_receives_connect_responds_with_ok_and_stores_stream_key_and_hostname",
-            );
+            let system = System::new();
             let mut subject = ProxyServer::new(
                 cryptde,
                 alias_cryptde(),
@@ -1504,7 +1535,16 @@ mod tests {
             subject_addr.try_send(BindMessage { peer_actors }).unwrap();
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         thread::sleep(Duration::from_millis(500));
@@ -1543,7 +1583,7 @@ mod tests {
             data: expected_data.clone(),
         };
         let stream_key_factory = StreamKeyFactoryMock::new(); // can't make any stream keys; shouldn't have to
-        let system = System::new("proxy_server_receives_http_request_with_no_consuming_wallet_and_sends_impersonated_response");
+        let system = System::new();
         let mut subject = ProxyServer::new(cryptde, alias_cryptde(), true, None);
         subject.stream_key_factory = Box::new(stream_key_factory);
         subject.keys_and_addrs.insert(stream_key, socket_addr);
@@ -1559,7 +1599,16 @@ mod tests {
         subject_addr.try_send(msg_from_dispatcher).unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let neighborhood_recording = neighborhood_log_arc.lock().unwrap();
         assert!(neighborhood_recording.is_empty());
         let hopper_recording = hopper_log_arc.lock().unwrap();
@@ -1602,7 +1651,7 @@ mod tests {
             data: expected_data.clone(),
         };
         let stream_key_factory = StreamKeyFactoryMock::new(); // can't make any stream keys; shouldn't have to
-        let system = System::new("proxy_server_receives_tls_request_with_no_consuming_wallet_and_sends_impersonated_response");
+        let system = System::new();
         let mut subject = ProxyServer::new(cryptde, alias_cryptde(), true, None);
         subject.stream_key_factory = Box::new(stream_key_factory);
         subject.keys_and_addrs.insert(stream_key, socket_addr);
@@ -1618,7 +1667,16 @@ mod tests {
         subject_addr.try_send(msg_from_dispatcher).unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let neighborhood_recording = neighborhood_log_arc.lock().unwrap();
         assert!(neighborhood_recording.is_empty());
         let hopper_recording = hopper_log_arc.lock().unwrap();
@@ -1665,7 +1723,7 @@ mod tests {
                 data: expected_data_inner,
             };
             let stream_key_factory = StreamKeyFactoryMock::new(); // can't make any stream keys; shouldn't have to
-            let system = System::new("proxy_server_receives_http_request_with_no_consuming_wallet_in_zero_hop_mode_and_handles_normally");
+            let system = System::new();
             let mut subject = ProxyServer::new(main_cryptde, alias_cryptde, false, None);
             subject.stream_key_factory = Box::new(stream_key_factory);
             subject.keys_and_addrs.insert(stream_key, socket_addr);
@@ -1680,7 +1738,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
         hopper_awaiter.await_message_count(1);
         let neighborhood_recording = neighborhood_log_arc.lock().unwrap();
@@ -1743,7 +1810,7 @@ mod tests {
                 data: expected_data_inner,
             };
             let stream_key_factory = StreamKeyFactoryMock::new(); // can't make any stream keys; shouldn't have to
-            let system = System::new("proxy_server_receives_tls_request_with_no_consuming_wallet_in_zero_hop_mode_and_handles_normally");
+            let system = System::new();
             let mut subject = ProxyServer::new(main_cryptde, alias_cryptde, false, None);
             subject.stream_key_factory = Box::new(stream_key_factory);
             subject.keys_and_addrs.insert(stream_key, socket_addr);
@@ -1758,7 +1825,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
         hopper_awaiter.await_message_count(1);
         let neighborhood_recording = neighborhood_log_arc.lock().unwrap();
@@ -1842,7 +1918,7 @@ mod tests {
         .unwrap();
         thread::spawn(move || {
             let stream_key_factory = StreamKeyFactoryMock::new(); // can't make any stream keys; shouldn't have to
-            let system = System::new("proxy_server_receives_http_request_from_dispatcher_then_sends_cores_package_to_hopper");
+            let system = System::new();
             let mut subject = ProxyServer::new(
                 main_cryptde,
                 alias_cryptde,
@@ -1861,7 +1937,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         hopper_awaiter.await_message_count(1);
@@ -1915,7 +2000,7 @@ mod tests {
         .unwrap();
         thread::spawn(move || {
             let stream_key_factory = StreamKeyFactoryMock::new(); // can't make any stream keys; shouldn't have to
-            let system = System::new("proxy_server_applies_late_wallet_information");
+            let system = System::new();
             let mut subject = ProxyServer::new(main_cryptde, alias_cryptde, false, None);
             subject.stream_key_factory = Box::new(stream_key_factory);
             subject.keys_and_addrs.insert(stream_key, socket_addr);
@@ -1934,7 +2019,16 @@ mod tests {
                 .unwrap();
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         hopper_awaiter.await_message_count(1);
@@ -2032,7 +2126,7 @@ mod tests {
         .unwrap();
         thread::spawn(move || {
             let stream_key_factory = StreamKeyFactoryMock::new().make_result(stream_key);
-            let system = System::new("proxy_server_receives_http_request_from_dispatcher_then_sends_cores_package_to_hopper");
+            let system = System::new();
             let mut subject = ProxyServer::new(
                 main_cryptde,
                 alias_cryptde,
@@ -2050,7 +2144,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         hopper_awaiter.await_message_count(1);
@@ -2088,7 +2191,7 @@ mod tests {
 
         thread::spawn(move || {
             let stream_key_factory = StreamKeyFactoryMock::new().make_result(stream_key);
-            let system = System::new("proxy_server_adds_route_for_stream_key");
+            let system = System::new();
             let mut subject = ProxyServer::new(
                 cryptde,
                 alias_cryptde(),
@@ -2109,7 +2212,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         let expected_add_route_message = AddRouteMessage {
@@ -2170,7 +2282,7 @@ mod tests {
 
         thread::spawn(move || {
             let stream_key_factory = StreamKeyFactoryMock::new().make_result(stream_key);
-            let system = System::new("proxy_server_uses_existing_route");
+            let system = System::new();
             let mut subject = ProxyServer::new(
                 main_cryptde,
                 alias_cryptde,
@@ -2190,7 +2302,16 @@ mod tests {
                 .unwrap();
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         hopper_awaiter.await_message_count(1);
@@ -2255,7 +2376,7 @@ mod tests {
         let stream_key = make_meaningless_stream_key();
         let expected_data = http_request.to_vec();
         let system =
-            System::new("proxy_server_sends_message_to_accountant_for_routing_service_consumed");
+            System::new();
         let peer_actors = peer_actors_builder()
             .accountant(accountant_mock)
             .hopper(hopper_mock)
@@ -2286,7 +2407,16 @@ mod tests {
         );
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let recording = hopper_recording_arc.lock().unwrap();
         let record = recording.get_record::<IncipientCoresPackage>(0);
         let payload_enc = &record.payload;
@@ -2333,7 +2463,7 @@ mod tests {
         let stream_key = make_meaningless_stream_key();
         let expected_data = http_request.to_vec();
         let system =
-            System::new("proxy_server_sends_message_to_accountant_for_routing_service_consumed");
+            System::new();
         let peer_actors = peer_actors_builder()
             .proxy_server(proxy_server_mock)
             .build();
@@ -2362,7 +2492,16 @@ mod tests {
         );
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let recording = proxy_server_recording_arc.lock().unwrap();
         let record = recording.get_record::<AddReturnRouteMessage>(0);
         assert_eq!(
@@ -2412,7 +2551,7 @@ mod tests {
         thread::spawn(move || {
             let stream_key_factory = StreamKeyFactoryMock::new().make_result(stream_key);
             let system =
-                System::new("proxy_server_logs_messages_when_routing_services_are_not_requested");
+                System::new();
             let mut subject = ProxyServer::new(
                 cryptde,
                 alias_cryptde(),
@@ -2428,7 +2567,16 @@ mod tests {
             peer_actors.proxy_server = ProxyServer::make_subs_from(&subject_addr);
             subject_addr.try_send(BindMessage { peer_actors }).unwrap();
             subject_addr.try_send(msg_from_dispatcher).unwrap();
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         TestLogHandler::new()
@@ -2480,7 +2628,7 @@ mod tests {
         thread::spawn(move || {
             let stream_key_factory = StreamKeyFactoryMock::new().make_result(stream_key);
             let system =
-                System::new("proxy_server_sends_message_to_accountant_for_exit_service_consumed");
+                System::new();
             let mut subject = ProxyServer::new(
                 cryptde,
                 alias_cryptde(),
@@ -2496,7 +2644,16 @@ mod tests {
             peer_actors.proxy_server = ProxyServer::make_subs_from(&subject_addr);
             subject_addr.try_send(BindMessage { peer_actors }).unwrap();
             subject_addr.try_send(msg_from_dispatcher).unwrap();
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         accountant_awaiter.await_message_count(1);
@@ -2537,7 +2694,7 @@ mod tests {
         thread::spawn(move || {
             let stream_key_factory = StreamKeyFactoryMock::new().make_result(stream_key);
             let system =
-                System::new("proxy_server_logs_message_when_exit_services_are_not_consumed");
+                System::new();
             let mut subject = ProxyServer::new(
                 cryptde,
                 alias_cryptde(),
@@ -2553,7 +2710,16 @@ mod tests {
             peer_actors.proxy_server = ProxyServer::make_subs_from(&subject_addr);
             subject_addr.try_send(BindMessage { peer_actors }).unwrap();
             subject_addr.try_send(msg_from_dispatcher).unwrap();
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         TestLogHandler::new()
@@ -2583,7 +2749,7 @@ mod tests {
             is_clandestine: false,
         };
         thread::spawn(move || {
-            let system = System::new("proxy_server_receives_http_request_from_dispatcher_but_neighborhood_cant_make_route");
+            let system = System::new();
             let subject = ProxyServer::new(
                 cryptde,
                 alias_cryptde(),
@@ -2600,7 +2766,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         dispatcher_awaiter.await_message_count(1);
@@ -2623,7 +2798,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Expected RoundTrip ExpectedServices but got OneWay")]
     fn proxy_server_panics_if_it_receives_a_one_way_route_from_a_request_for_a_round_trip_route() {
-        let _system = System::new("proxy_server_panics_if_it_receives_a_one_way_route_from_a_request_for_a_round_trip_route");
+        let _system = System::new();
         let peer_actors = peer_actors_builder().build();
 
         let cryptde = main_cryptde();
@@ -2713,7 +2888,7 @@ mod tests {
             is_clandestine: false,
         };
         thread::spawn(move || {
-            let system = System::new("proxy_server_receives_http_request_from_dispatcher_but_neighborhood_cant_make_route");
+            let system = System::new();
             let subject = ProxyServer::new(
                 cryptde,
                 alias_cryptde(),
@@ -2730,7 +2905,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         dispatcher_awaiter.await_message_count(1);
@@ -2821,7 +3005,7 @@ mod tests {
             );
             subject.stream_key_factory =
                 Box::new(StreamKeyFactoryMock::new().make_result(stream_key.clone()));
-            let system = System::new("proxy_server_receives_tls_client_hello_from_dispatcher_then_sends_cores_package_to_hopper");
+            let system = System::new();
             let subject_addr: Addr<ProxyServer> = subject.start();
             let mut peer_actors = peer_actors_builder()
                 .hopper(hopper_mock)
@@ -2832,7 +3016,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         hopper_awaiter.await_message_count(1);
@@ -2899,7 +3092,7 @@ mod tests {
             );
             subject.stream_key_factory =
                 Box::new(StreamKeyFactoryMock::new().make_result(stream_key.clone()));
-            let system = System::new("proxy_server_receives_tls_client_hello_from_dispatcher_then_sends_cores_package_to_hopper");
+            let system = System::new();
             let subject_addr: Addr<ProxyServer> = subject.start();
             let mut peer_actors = peer_actors_builder()
                 .hopper(hopper_mock)
@@ -2910,7 +3103,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         hopper_awaiter.await_message_count(1);
@@ -2975,7 +3177,7 @@ mod tests {
             );
             subject.stream_key_factory =
                 Box::new(StreamKeyFactoryMock::new().make_result(stream_key.clone()));
-            let system = System::new("proxy_server_receives_tls_client_hello_from_dispatcher_then_sends_cores_package_to_hopper");
+            let system = System::new();
             let subject_addr: Addr<ProxyServer> = subject.start();
             let mut peer_actors = peer_actors_builder()
                 .hopper(hopper_mock)
@@ -2986,7 +3188,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         hopper_awaiter.await_message_count(1);
@@ -3034,7 +3245,7 @@ mod tests {
             is_clandestine: false,
         };
         thread::spawn(move || {
-            let system = System::new("proxy_server_receives_tls_client_hello_from_dispatcher_but_neighborhood_cant_make_route");
+            let system = System::new();
             let subject = ProxyServer::new(
                 cryptde,
                 alias_cryptde(),
@@ -3051,7 +3262,16 @@ mod tests {
 
             subject_addr.try_send(msg_from_dispatcher).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
         dispatcher_awaiter.await_message_count(1);
         let recording = dispatcher_recording_arc.lock().unwrap();
@@ -3071,7 +3291,7 @@ mod tests {
     #[test]
     fn proxy_server_receives_terminal_response_from_hopper() {
         init_test_logging();
-        let system = System::new("proxy_server_receives_response_from_hopper");
+        let system = System::new();
         let (dispatcher_mock, _, dispatcher_log_arc) = make_recorder();
         let cryptde = main_cryptde();
         let mut subject = ProxyServer::new(
@@ -3120,7 +3340,16 @@ mod tests {
         subject_addr.try_send(second_expired_cores_package).unwrap(); // should generate log because stream key is now unknown
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let recording = dispatcher_log_arc.lock().unwrap();
         let record = recording.get_record::<TransmitDataMsg>(0);
@@ -3195,7 +3424,7 @@ mod tests {
 
     #[test]
     fn proxy_server_receives_nonterminal_response_from_hopper() {
-        let system = System::new("proxy_server_receives_response_from_hopper");
+        let system = System::new();
         let (dispatcher_mock, _, dispatcher_log_arc) = make_recorder();
         let (accountant, _, accountant_recording_arc) = make_recorder();
         let cryptde = main_cryptde();
@@ -3321,7 +3550,16 @@ mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let dispatcher_recording = dispatcher_log_arc.lock().unwrap();
         let record = dispatcher_recording.get_record::<TransmitDataMsg>(0);
@@ -3376,7 +3614,7 @@ mod tests {
 
     #[test]
     fn handle_dns_resolve_failure_sends_message_to_dispatcher() {
-        let system = System::new("proxy_server_receives_response_from_routing_services");
+        let system = System::new();
 
         let (dispatcher_mock, _, dispatcher_log_arc) = make_recorder();
 
@@ -3431,7 +3669,16 @@ mod tests {
         subject_addr.try_send(expired_cores_package).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let dispatcher_recording = dispatcher_log_arc.lock().unwrap();
         let record = dispatcher_recording.get_record::<TransmitDataMsg>(0);
@@ -3451,7 +3698,7 @@ mod tests {
 
     #[test]
     fn handle_dns_resolve_failure_reports_services_consumed() {
-        let system = System::new("proxy_server_records_accounting");
+        let system = System::new();
         let (accountant, _, accountant_recording_arc) = make_recorder();
         let cryptde = main_cryptde();
         let mut subject = ProxyServer::new(
@@ -3518,7 +3765,16 @@ mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let accountant_recording = accountant_recording_arc.lock().unwrap();
         check_exit_report(&accountant_recording, 0, &incoming_route_d_wallet, 0);
@@ -3539,7 +3795,7 @@ mod tests {
 
     #[test]
     fn handle_dns_resolve_failure_sends_message_to_neighborhood() {
-        let system = System::new("test");
+        let system = System::new();
 
         let (neighborhood_mock, _, neighborhood_log_arc) = make_recorder();
 
@@ -3597,7 +3853,16 @@ mod tests {
         subject_addr.try_send(expired_cores_package).unwrap();
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         let neighborhood_recording = neighborhood_log_arc.lock().unwrap();
         let record = neighborhood_recording.get_record::<NodeRecordMetadataMessage>(0);
@@ -3610,7 +3875,7 @@ mod tests {
     #[test]
     fn handle_dns_resolve_failure_logs_when_stream_key_be_gone_but_server_name_be_not() {
         init_test_logging();
-        let system = System::new("test");
+        let system = System::new();
 
         let (neighborhood_mock, _, _) = make_recorder();
 
@@ -3675,7 +3940,16 @@ mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         TestLogHandler::new().exists_log_containing(
             format!("Discarding DnsResolveFailure message for \"server.com\" from an unrecognized stream key {:?}", stream_key).as_str());
@@ -3684,7 +3958,7 @@ mod tests {
     #[test]
     fn handle_dns_resolve_failure_logs_when_stream_key_and_server_name_are_both_missing() {
         init_test_logging();
-        let system = System::new("test");
+        let system = System::new();
 
         let (neighborhood_mock, _, _) = make_recorder();
 
@@ -3749,7 +4023,16 @@ mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         TestLogHandler::new().exists_log_containing(
             format!("Discarding DnsResolveFailure message for <unspecified server> from an unrecognized stream key {:?}", stream_key).as_str());
@@ -3822,7 +4105,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Dispatcher unbound in ProxyServer")]
     fn panics_if_dispatcher_is_unbound() {
-        let system = System::new("panics_if_dispatcher_is_unbound");
+        let system = System::new();
         let cryptde = main_cryptde();
         let socket_addr = SocketAddr::from_str("1.2.3.4:5678").unwrap();
         let stream_key = make_meaningless_stream_key();
@@ -3866,13 +4149,22 @@ mod tests {
         subject_addr.try_send(expired_cores_package).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     #[test]
     #[should_panic(expected = "Neighborhood unbound in ProxyServer")]
     fn panics_if_hopper_is_unbound() {
-        let system = System::new("panics_if_hopper_is_unbound");
+        let system = System::new();
         let http_request = b"GET /index.html HTTP/1.1\r\nHost: nowhere.com\r\n\r\n";
         let subject = ProxyServer::new(main_cryptde(), alias_cryptde(), false, None);
         let socket_addr = SocketAddr::from_str("1.2.3.4:5678").unwrap();
@@ -3890,7 +4182,16 @@ mod tests {
         subject_addr.try_send(msg_from_dispatcher).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     #[test]
@@ -3900,7 +4201,7 @@ mod tests {
         let cryptde = main_cryptde();
         let (dispatcher, _, dispatcher_recording_arc) = make_recorder();
         let (accountant, _, accountant_recording_arc) = make_recorder();
-        let system = System::new("report_response_services_consumed_complains_and_drops_package_if_return_route_id_is_unrecognized");
+        let system = System::new();
         let mut subject = ProxyServer::new(
             cryptde,
             alias_cryptde(),
@@ -3937,7 +4238,16 @@ mod tests {
         subject_addr.try_send(expired_cores_package).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new().exists_log_containing("ERROR: ProxyServer: Can't report services consumed: received response with bogus return-route ID 1234. Ignoring");
         assert_eq!(dispatcher_recording_arc.lock().unwrap().len(), 0);
         assert_eq!(accountant_recording_arc.lock().unwrap().len(), 0);
@@ -3950,7 +4260,7 @@ mod tests {
         let cryptde = main_cryptde();
         let (dispatcher, _, dispatcher_recording_arc) = make_recorder();
         let (accountant, _, accountant_recording_arc) = make_recorder();
-        let system = System::new("report_response_services_consumed_complains_and_drops_package_if_return_route_id_is_unreadable");
+        let system = System::new();
         let mut subject = ProxyServer::new(
             cryptde,
             alias_cryptde(),
@@ -3989,7 +4299,16 @@ mod tests {
         subject_addr.try_send(expired_cores_package).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         TestLogHandler::new().exists_log_containing(
             "ERROR: ProxyServer: Can't report services consumed: DecryptionError(InvalidKey(\"Could not decrypt with",
         );
@@ -4005,7 +4324,7 @@ mod tests {
 
         let (tx, rx) = unbounded();
         thread::spawn(move || {
-            let system = System::new("report_response_services_consumed_complains_and_drops_package_if_return_route_id_does_not_exist");
+            let system = System::new();
             let mut subject = ProxyServer::new(
                 cryptde,
                 alias_cryptde(),
@@ -4031,7 +4350,16 @@ mod tests {
             subject_addr.try_send(BindMessage { peer_actors }).unwrap();
             tx.send(subject_addr).unwrap();
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         let subject_addr = rx.recv().unwrap();
@@ -4100,7 +4428,7 @@ mod tests {
 
     #[test]
     fn handle_stream_shutdown_msg_reports_to_counterpart_through_tunnel_when_necessary() {
-        let system = System::new("test");
+        let system = System::new();
         let mut subject = ProxyServer::new(
             main_cryptde(),
             alias_cryptde(),
@@ -4185,7 +4513,16 @@ mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let recording = hopper_recording_arc.lock().unwrap();
         let record = recording.get_record::<IncipientCoresPackage>(0);
         assert_eq!(record.route, affected_route);
@@ -4222,7 +4559,7 @@ mod tests {
 
     #[test]
     fn handle_stream_shutdown_msg_reports_to_counterpart_without_tunnel_when_necessary() {
-        let system = System::new("test");
+        let system = System::new();
         let mut subject = ProxyServer::new(
             main_cryptde(),
             alias_cryptde(),
@@ -4301,7 +4638,16 @@ mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let recording = hopper_recording_arc.lock().unwrap();
         let record = recording.get_record::<IncipientCoresPackage>(0);
         assert_eq!(record.route, affected_route);
@@ -4403,7 +4749,7 @@ mod tests {
         expected = "ProxyServer should never get ShutdownStreamMsg about clandestine stream"
     )]
     fn handle_stream_shutdown_complains_about_clandestine_message() {
-        let system = System::new("test");
+        let system = System::new();
         let subject = ProxyServer::new(main_cryptde(), alias_cryptde(), true, None);
         let subject_addr = subject.start();
 
@@ -4416,6 +4762,15 @@ mod tests {
             .unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 }

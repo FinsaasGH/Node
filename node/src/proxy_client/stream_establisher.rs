@@ -141,6 +141,7 @@ mod tests {
     use std::net::SocketAddr;
     use std::str::FromStr;
     use std::thread;
+    use std::time::SystemTime;
     use tokio::prelude::Async;
 
     #[test]
@@ -148,12 +149,21 @@ mod tests {
         let (proxy_client, proxy_client_awaiter, proxy_client_recording_arc) = make_recorder();
         let (sub_tx, sub_rx) = unbounded();
         thread::spawn(move || {
-            let system = System::new("spawn_stream_reader_handles_data");
+            let system = System::new();
             let peer_actors = peer_actors_builder().proxy_client(proxy_client).build();
             sub_tx
                 .send(peer_actors.proxy_client_opt.unwrap().inbound_server_data)
                 .expect("Unable to send inbound_server_data sub from proxy_client to test");
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         let (ibsd_tx, ibsd_rx) = unbounded();

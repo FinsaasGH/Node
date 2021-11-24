@@ -4,7 +4,7 @@ use crate::sub_lib::wallet::Wallet;
 use actix::Message;
 
 #[derive(Clone, PartialEq, Debug, Message)]
-
+#[rtype(result = "")]
 pub struct SetConsumingWalletMessage {
     pub wallet: Wallet,
 }

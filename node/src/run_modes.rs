@@ -224,7 +224,7 @@ struct RunnerReal {
 
 impl Runner for RunnerReal {
     fn run_node(&self, args: &[String], streams: &mut StdStreams<'_>) -> Result<(), RunnerError> {
-        let system = System::new("main");
+        let system = System::new();
         let mut server_initializer = self.server_initializer_factory.make();
         server_initializer.go(streams, args)?;
         actix::spawn(server_initializer.map_err(|_| {
@@ -232,7 +232,7 @@ impl Runner for RunnerReal {
         }));
         match system.run() {
             Ok(_) => Ok(()),
-            Err(_) => return Err(RunnerError::Numeric(1))
+            Err(_) => Err(RunnerError::Numeric(1)),
         }
     }
 

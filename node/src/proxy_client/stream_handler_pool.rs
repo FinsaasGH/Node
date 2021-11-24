@@ -516,6 +516,7 @@ mod tests {
     use std::str::FromStr;
     use std::sync::{Arc, Mutex};
     use std::thread;
+    use std::time::SystemTime;
     use tokio;
     use tokio::prelude::Async;
     use trust_dns_resolver::error::ResolveErrorKind;
@@ -541,10 +542,12 @@ mod tests {
                 .unwrap(),
             _ => panic!("Expected MessageType::ClientRequest, got something else"),
         };
-        actix::run(move || {
+        if actix::run(move || {
             subject.process_package(payload, paying_wallet);
             ok(())
-        });
+        })
+        .is_ok()
+        {};
     }
 
     #[test]
@@ -552,7 +555,7 @@ mod tests {
         let (proxy_client, proxy_client_awaiter, proxy_client_recording) = make_recorder();
         let stream_key = make_meaningless_stream_key();
         thread::spawn(move || {
-            let system = System::new("dns_resolution_failure_sends_a_message_to_proxy_client");
+            let system = System::new();
             let peer_actors = peer_actors_builder().proxy_client(proxy_client).build();
             let cryptde = main_cryptde();
             let resolver_mock =
@@ -594,7 +597,16 @@ mod tests {
 
             StreamHandlerPoolReal::process_package(payload, None, Arc::new(Mutex::new(inner)));
 
-            system.run();
+            let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         });
 
         proxy_client_awaiter.await_message_count(1);
@@ -1516,7 +1528,7 @@ mod tests {
 
     #[test]
     fn clean_up_dead_streams_sends_server_drop_report_if_dead_stream_is_in_map() {
-        let system = System::new("test");
+        let system = System::new();
         let (proxy_client, _, proxy_client_recording_arc) = make_recorder();
         let peer_actors = peer_actors_builder().proxy_client(proxy_client).build();
         let mut subject = StreamHandlerPoolReal::new(
@@ -1542,7 +1554,16 @@ mod tests {
         subject.clean_up_dead_streams();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let proxy_client_recording = proxy_client_recording_arc.lock().unwrap();
         let report = proxy_client_recording.get_record::<InboundServerData>(0);
         assert_eq!(
@@ -1559,7 +1580,7 @@ mod tests {
 
     #[test]
     fn clean_up_dead_streams_does_not_send_server_drop_report_if_dead_stream_is_gone_already() {
-        let system = System::new("test");
+        let system = System::new();
         let (proxy_client, _, proxy_client_recording_arc) = make_recorder();
         let peer_actors = peer_actors_builder().proxy_client(proxy_client).build();
         let mut subject = StreamHandlerPoolReal::new(
@@ -1578,7 +1599,16 @@ mod tests {
         subject.clean_up_dead_streams();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let proxy_client_recording = proxy_client_recording_arc.lock().unwrap();
         assert_eq!(proxy_client_recording.len(), 0);
     }

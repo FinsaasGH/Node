@@ -191,10 +191,11 @@ mod tests {
     use std::net::SocketAddr;
     use std::str::FromStr;
     use std::thread;
+    use std::time::SystemTime;
 
     #[test]
     fn sends_inbound_data_for_proxy_server_to_proxy_server() {
-        let system = System::new("test");
+        let system = System::new();
         let subject = Dispatcher::new(CrashPoint::None, "descriptor".to_string());
         let subject_addr: Addr<Dispatcher> = subject.start();
         let subject_ibcd = subject_addr.clone().recipient::<InboundClientData>();
@@ -219,7 +220,16 @@ mod tests {
         subject_ibcd.try_send(ibcd_in).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         awaiter.await_message_count(1);
         let recording = recording_arc.lock().unwrap();
@@ -235,7 +245,7 @@ mod tests {
 
     #[test]
     fn sends_inbound_data_for_hopper_to_hopper() {
-        let system = System::new("test");
+        let system = System::new();
         let subject = Dispatcher::new(CrashPoint::None, "descriptor".to_string());
         let subject_addr: Addr<Dispatcher> = subject.start();
         let (hopper, hopper_awaiter, hopper_recording_arc) = make_recorder();
@@ -257,7 +267,16 @@ mod tests {
         subject_addr.try_send(ibcd_in).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         hopper_awaiter.await_message_count(1);
         let hopper_recording = hopper_recording_arc.lock().unwrap();
@@ -274,7 +293,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "ProxyServer unbound in Dispatcher")]
     fn inbound_client_data_handler_panics_when_proxy_server_is_unbound() {
-        let system = System::new("test");
+        let system = System::new();
         let subject = Dispatcher::new(CrashPoint::None, "descriptor".to_string());
         let subject_addr: Addr<Dispatcher> = subject.start();
         let subject_ibcd = subject_addr.recipient::<InboundClientData>();
@@ -293,13 +312,22 @@ mod tests {
         subject_ibcd.try_send(ibcd_in).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     #[test]
     #[should_panic(expected = "Hopper unbound in Dispatcher")]
     fn inbound_client_data_handler_panics_when_hopper_is_unbound() {
-        let system = System::new("test");
+        let system = System::new();
         let subject = Dispatcher::new(CrashPoint::None, "descriptor".to_string());
         let subject_addr: Addr<Dispatcher> = subject.start();
         let subject_ibcd = subject_addr.recipient::<InboundClientData>();
@@ -318,13 +346,22 @@ mod tests {
         subject_ibcd.try_send(ibcd_in).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     #[test]
     #[should_panic(expected = "StreamHandlerPool unbound in Dispatcher")]
     fn panics_when_stream_handler_pool_is_unbound() {
-        let system = System::new("test");
+        let system = System::new();
         let subject = Dispatcher::new(CrashPoint::None, "descriptor".to_string());
         let subject_addr: Addr<Dispatcher> = subject.start();
         let subject_obcd = subject_addr.recipient::<TransmitDataMsg>();
@@ -340,12 +377,21 @@ mod tests {
         subject_obcd.try_send(obcd).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
     }
 
     #[test]
     fn forwards_outbound_data_to_stream_handler_pool() {
-        let system = System::new("test");
+        let system = System::new();
         let subject = Dispatcher::new(CrashPoint::None, "descriptor".to_string());
         let subject_addr: Addr<Dispatcher> = subject.start();
         let subject_obcd = subject_addr.clone().recipient::<TransmitDataMsg>();
@@ -376,7 +422,16 @@ mod tests {
         subject_obcd.try_send(obcd).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
 
         awaiter.await_message_count(1);
         let recording = recording_arc.lock().unwrap();
@@ -392,7 +447,7 @@ mod tests {
 
     #[test]
     fn handle_stream_shutdown_msg_routes_non_clandestine_to_proxy_server() {
-        let system = System::new("test");
+        let system = System::new();
         let subject = Dispatcher::new(CrashPoint::None, "descriptor".to_string());
         let addr = subject.start();
         let (proxy_server, _, proxy_server_recording_arc) = make_recorder();
@@ -414,7 +469,16 @@ mod tests {
         addr.try_send(msg.clone()).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let proxy_server_recording = proxy_server_recording_arc.lock().unwrap();
         assert_eq!(
             proxy_server_recording.get_record::<StreamShutdownMsg>(0),
@@ -426,7 +490,7 @@ mod tests {
 
     #[test]
     fn handle_stream_shutdown_msg_routes_clandestine_to_neighborhood() {
-        let system = System::new("test");
+        let system = System::new();
         let subject = Dispatcher::new(CrashPoint::None, "descriptor".to_string());
         let addr = subject.start();
         let (proxy_server, _, proxy_server_recording_arc) = make_recorder();
@@ -445,7 +509,16 @@ mod tests {
         addr.try_send(msg.clone()).unwrap();
 
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let proxy_server_recording = proxy_server_recording_arc.lock().unwrap();
         assert_eq!(proxy_server_recording.len(), 0);
         let neighborhood_recording = neighborhood_recording_arc.lock().unwrap();
@@ -458,7 +531,7 @@ mod tests {
     #[test]
     //joined with inspecting whether dispatcher obtains the information of the descriptor correctly
     fn descriptor_request_results_in_descriptor_response() {
-        let system = System::new("test");
+        let system = System::new();
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
         let mut bootstrapper_config = BootstrapperConfig::new();
         bootstrapper_config.node_descriptor_opt = Some("abcdef1234".to_string());
@@ -479,7 +552,16 @@ mod tests {
 
         thread::sleep(std::time::Duration::from_millis(15)); //Required to break unknown race condition, probably inside actix.
         System::current().stop_with_code(0);
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let response = ui_gateway_recording.get_record::<NodeToUiMessage>(0);
         assert_eq!(

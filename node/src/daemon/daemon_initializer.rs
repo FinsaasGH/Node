@@ -22,6 +22,7 @@ use std::collections::HashMap;
 use masq_lib::utils::ExpectValue;
 #[cfg(test)]
 use std::any::Any;
+use std::time::SystemTime;
 
 pub trait RecipientsFactory {
     fn make(&self, launcher: Box<dyn Launcher>, ui_port: u16) -> Recipients;
@@ -75,7 +76,7 @@ impl DaemonInitializer for DaemonInitializerReal {
             let message = format!("There appears to be a process already listening on port {}; are you sure there's not a Daemon already running?", self.config.ui_port);
             return Err(ConfiguratorError::required("ui-port", message.as_str()));
         }
-        let system = System::new("daemon");
+        let system = System::new();
         let (sender, receiver) = self.channel_factory.make();
 
         self.bind(sender);
@@ -146,7 +147,16 @@ impl DaemonInitializerReal {
     }
 
     fn split(&mut self, system: SystemRunner, receiver: Receiver<HashMap<String, String>>) {
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let param_map = receiver.recv().expect("Daemon is dead");
         let param_vec = param_map
             .into_iter()
@@ -252,7 +262,7 @@ mod tests {
         );
         let (ui_gateway, _, ui_gateway_recording_arc) = make_recorder();
         let (daemon, _, daemon_recording_arc) = make_recorder();
-        let system = System::new("bind_binds_everything_together");
+        let system = System::new();
         let recipients = make_recipients(ui_gateway, daemon);
         let dirs_wrapper = DirsWrapperMock::new()
             .home_dir_result(Some(data_dir.clone()))
@@ -275,7 +285,16 @@ mod tests {
         subject.bind(unbounded().0);
 
         System::current().stop();
-        system.run();
+        let now = SystemTime::now();
+        let _ = system.run();
+        match now.elapsed() {
+            Ok(elapsed) => println!(
+                "Time taken: {}.{:06} seconds",
+                elapsed.as_secs(),
+                elapsed.subsec_micros()
+            ),
+            Err(e) => println!("An error occurred: {:?}", e),
+        }
         let ui_gateway_recording = ui_gateway_recording_arc.lock().unwrap();
         let daemon_recording = daemon_recording_arc.lock().unwrap();
         let _ = ui_gateway_recording.get_record::<DaemonBindMessage>(0);
@@ -291,7 +310,7 @@ mod tests {
             "split_accepts_parameters_upon_system_shutdown_and_calls_main_with_args",
         );
         let system =
-            System::new("split_accepts_parameters_upon_system_shutdown_and_calls_main_with_args");
+            System::new();
         let dirs_wrapper = DirsWrapperMock::new()
             .home_dir_result(Some(data_dir.clone()))
             .data_dir_result(Some(data_dir));
