@@ -235,7 +235,7 @@ fn downed_nodes_not_offered_in_passes_or_introductions() {
     debuter_node.transmit_debut(&masq_real_node).unwrap();
     // What's the return Gossip?
     let (gossip, ip_addr) = debuter_node
-        .wait_for_gossip(Duration::from_secs(2))
+        .wait_for_gossip(Duration::from_secs(10))
         .unwrap();
     match parse_gossip(&gossip, ip_addr) {
         GossipType::IntroductionGossip(introduction) => {

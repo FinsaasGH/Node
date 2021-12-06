@@ -183,7 +183,7 @@ impl MASQNode {
                 pattern,
                 self.logfile_contents
             );
-            thread::sleep(Duration::from_millis(200));
+            thread::sleep(Duration::from_millis(250));
         }
     }
 

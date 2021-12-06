@@ -445,10 +445,11 @@ mod tests {
 
         let (tx, rx) = unbounded();
         thread::spawn(move || {
-            Server::new(move |req, mut rsp| {
+            let server = Server::new(move |req, mut rsp| {
                 tx.send(req.body().clone()).unwrap();
                 Ok(rsp.body(br#"{"jsonrpc":"2.0","id":3,"result":[{"address":"0xcd6c588e005032dd882cd43bf53a32129be81302","blockHash":"0x1a24b9169cbaec3f6effa1f600b70c7ab9e8e86db44062b49132a4415d26732a","blockNumber":"0x4be663","data":"0x0000000000000000000000000000000000000000000000000010000000000000","logIndex":"0x0","removed":false,"topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef","0x0000000000000000000000003f69f9efd4f2592fd70be8c32ecd9dce71c472fc","0x000000000000000000000000adc1853c7859369639eb414b6342b36288fe6092"],"transactionHash":"0x955cec6ac4f832911ab894ce16aa22c3003f46deff3f7165b32700d2f5ff0681","transactionIndex":"0x0"}]}"#.to_vec())?)
-            }).listen(&Ipv4Addr::LOCALHOST.to_string(), &format!("{}", port));
+            });
+            server.listen(&Ipv4Addr::LOCALHOST.to_string(), &format!("{}", port));
         });
 
         let (event_loop_handle, transport) = Http::with_max_parallel(
@@ -579,10 +580,10 @@ mod tests {
         let port = find_free_port();
 
         thread::spawn(move || {
-            Server::new(|_req, mut rsp| {
+            let server = Server::new(|_req, mut rsp| {
                 Ok(rsp.body(br#"{"jsonrpc":"2.0","id":3,"result":[{"address":"0xcd6c588e005032dd882cd43bf53a32129be81302","blockHash":"0x1a24b9169cbaec3f6effa1f600b70c7ab9e8e86db44062b49132a4415d26732a","data":"0x0000000000000000000000000000000000000000000000000010000000000000","logIndex":"0x0","removed":false,"topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef","0x0000000000000000000000003f69f9efd4f2592fd70be8c32ecd9dce71c472fc","0x000000000000000000000000adc1853c7859369639eb414b6342b36288fe6092"],"transactionHash":"0x955cec6ac4f832911ab894ce16aa22c3003f46deff3f7165b32700d2f5ff0681","transactionIndex":"0x0"}]}"#.to_vec())?)
-            })
-                .listen(&Ipv4Addr::LOCALHOST.to_string(), &format!("{}", port));
+            });
+            server.listen(&Ipv4Addr::LOCALHOST.to_string(), &format!("{}", port));
         });
 
         let (event_loop_handle, transport) = Http::with_max_parallel(
