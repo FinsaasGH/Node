@@ -1224,9 +1224,7 @@ mod tests {
         let poll_write_params_arc_a = poll_write_params_arc.clone();
         let (tx, rx) = unbounded();
         thread::spawn(move || {
-            let system = System::new(
-                "stream_handler_pool_creates_nonexistent_stream_for_reading_and_writing",
-            );
+            let system = System::new();
             let discriminator_factory = JsonDiscriminatorFactory::new();
             let mut subject = StreamHandlerPool::new(vec![Box::new(discriminator_factory)]);
             subject.stream_connector = Box::new(
@@ -2036,9 +2034,7 @@ mod tests {
         let outgoing_unmasked_len = outgoing_unmasked.len();
         let (tx, rx) = unbounded();
         thread::spawn(move || {
-            let system = System::new(
-                "stream_handler_pool_creates_nonexistent_stream_for_reading_and_writing",
-            );
+            let system = System::new();
             let discriminator_factory = JsonDiscriminatorFactory::new();
             let mut subject = StreamHandlerPool::new(vec![Box::new(discriminator_factory)]);
             subject.stream_connector = Box::new(StreamConnectorMock::new()); // this will panic if a connection is attempted
