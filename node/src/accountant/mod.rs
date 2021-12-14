@@ -395,12 +395,10 @@ impl Accountant {
     }
 
     fn scan_for_received_payments(&mut self) {
-        let future_logger = self.logger.clone();
         debug!(
             self.logger,
             "Scanning for payments to {}", self.earning_wallet
         );
-        let future_report_new_payments_sub = self.report_new_payments_sub.clone();
         let start_block = match self.persistent_configuration.start_block() {
             Ok(start_block) => start_block,
             Err(pce) => {
@@ -411,46 +409,22 @@ impl Accountant {
                 return;
             }
         };
-        let future = self
+        let _ = self
             .retrieve_transactions_sub
             .as_ref()
             .expect("BlockchainBridge is unbound")
-            .send(RetrieveTransactions {
+            .try_send(RetrieveTransactions {
                 start_block,
                 recipient: self.earning_wallet.clone(),
-            })
-            .then(move |transactions_possibly| match transactions_possibly {
-                Ok(Ok(ref vec)) if vec.is_empty() => {
-                    debug!(future_logger, "No payments detected");
-                    Ok(())
-                }
-                Ok(Ok(transactions)) => {
-                    future_report_new_payments_sub
-                        .expect("Accountant is unbound")
-                        .try_send(ReceivedPayments {
-                            payments: transactions,
-                        })
-                        .expect("Accountant is dead.");
-                    Ok(())
-                }
-                Ok(Err(e)) => {
-                    warning!(
-                        future_logger,
-                        "Unable to retrieve transactions from Blockchain Bridge: {:?}",
-                        e
-                    );
-                    Err(())
-                }
-                Err(e) => {
-                    error!(
-                        future_logger,
-                        "Unable to send to Blockchain Bridge: {:?}", e
-                    );
-                    thread::sleep(Duration::from_secs(1));
-                    panic!("Unable to send to Blockchain Bridge: {:?}", e);
-                }
             });
-        actix::spawn(future);
+        let _ = self
+            .report_new_payments_sub
+            .clone()
+            .expect("Accountant is unbound")
+            .try_send(ReceivedPayments {
+                payments: transactions,
+            })
+            .expect("Accountant is dead.");
     }
 
     fn balance_and_age(account: &ReceivableAccount) -> (String, Duration) {
