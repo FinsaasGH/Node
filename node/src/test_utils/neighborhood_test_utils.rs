@@ -11,6 +11,7 @@ use crate::sub_lib::neighborhood::{NeighborhoodConfig, NeighborhoodMode, NodeDes
 use crate::sub_lib::node_addr::NodeAddr;
 use crate::sub_lib::wallet::Wallet;
 use crate::test_utils::*;
+use ethereum_types::H160;
 use masq_lib::blockchains::chains::Chain;
 use masq_lib::test_utils::utils::TEST_DEFAULT_CHAIN;
 use std::convert::TryFrom;
@@ -77,6 +78,7 @@ pub fn db_from_node(node: &NodeRecord) -> NeighborhoodDatabase {
     )
 }
 
+// Note: If you don't supply a neighbor_opt, here, your root node's IP address will be removed.
 pub fn neighborhood_from_nodes(
     root: &NodeRecord,
     neighbor_opt: Option<&NodeRecord>,
@@ -99,7 +101,7 @@ pub fn neighborhood_from_nodes(
         },
     };
     config.earning_wallet = root.earning_wallet();
-    config.consuming_wallet = Some(make_paying_wallet(b"consuming"));
+    config.consuming_wallet_opt = Some(make_paying_wallet(b"consuming"));
     config.db_password_opt = Some("password".to_string());
     Neighborhood::new(cryptde, &config)
 }
@@ -138,9 +140,7 @@ impl NodeRecord {
         let key_slice = public_key.as_slice();
         data[64 - key_slice.len()..].copy_from_slice(key_slice);
         match ethsign::PublicKey::from_slice(&data) {
-            Ok(public) => Some(Wallet::from(ethereum_types::Address {
-                0: *public.address(),
-            })),
+            Ok(public) => Some(Wallet::from(H160(*public.address()))),
             Err(_) => None,
         }
     }

@@ -2,7 +2,7 @@
 use super::packet_facade::PacketFacade;
 use super::packet_facade::Query;
 use super::packet_facade::ResourceRecord;
-use crate::sub_lib::logger::Logger;
+use masq_lib::logger::Logger;
 use std::convert::From;
 use std::convert::TryFrom;
 use std::net::SocketAddr;
@@ -180,13 +180,19 @@ struct ResponseRecord {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sub_lib::logger::Logger;
-    use crate::test_utils::logging::init_test_logging;
-    use crate::test_utils::logging::TestLogHandler;
+    use masq_lib::logger::Logger;
+    use masq_lib::test_utils::logging::init_test_logging;
+    use masq_lib::test_utils::logging::TestLogHandler;
     use std::net::Ipv4Addr;
     use std::net::SocketAddr;
     use std::net::SocketAddrV4;
     use std::time::Instant;
+
+    #[test]
+    fn constants_have_correct_values() {
+        assert_eq!(HEADER_BYTES, 12);
+        assert_eq!(UNKNOWN, "<unknown>");
+    }
 
     #[test]
     fn returns_format_error_if_queries_overrun() {

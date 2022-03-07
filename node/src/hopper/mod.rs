@@ -10,7 +10,6 @@ use crate::sub_lib::dispatcher::InboundClientData;
 use crate::sub_lib::hopper::HopperSubs;
 use crate::sub_lib::hopper::IncipientCoresPackage;
 use crate::sub_lib::hopper::{HopperConfig, NoLookupIncipientCoresPackage};
-use crate::sub_lib::logger::Logger;
 use crate::sub_lib::peer_actors::BindMessage;
 use crate::sub_lib::utils::{handle_ui_crash_request, NODE_MAILBOX_CAPACITY};
 use actix::Actor;
@@ -18,6 +17,7 @@ use actix::Addr;
 use actix::Context;
 use actix::Handler;
 use consuming_service::ConsumingService;
+use masq_lib::logger::Logger;
 use masq_lib::ui_gateway::NodeFromUiMessage;
 use routing_service::RoutingService;
 
@@ -164,6 +164,11 @@ mod tests {
     use std::str::FromStr;
 
     #[test]
+    fn constants_have_correct_values() {
+        assert_eq!(CRASH_KEY, "HOPPER");
+    }
+
+    #[test]
     #[should_panic(expected = "Hopper unbound: no RoutingService")]
     fn panics_if_routing_service_is_unbound() {
         let main_cryptde = main_cryptde();
@@ -201,7 +206,7 @@ mod tests {
             is_decentralized: false,
             crashable: false,
         });
-        let subject_addr: Addr<Hopper> = subject.start();
+        let subject_addr = subject.start();
 
         subject_addr.try_send(inbound_client_data).unwrap();
 
@@ -242,7 +247,7 @@ mod tests {
             is_decentralized: false,
             crashable: false,
         });
-        let subject_addr: Addr<Hopper> = subject.start();
+        let subject_addr = subject.start();
 
         subject_addr.try_send(incipient_package).unwrap();
 

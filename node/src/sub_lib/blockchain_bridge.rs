@@ -1,8 +1,8 @@
 // Copyright (c) 2019, MASQ (https://masq.ai) and/or its affiliates. All rights reserved.
 
-use crate::accountant::payable_dao::{PayableAccount, Payment};
+use crate::accountant::payable_dao::PayableAccount;
+use crate::accountant::RequestTransactionReceipts;
 use crate::blockchain::blockchain_bridge::RetrieveTransactions;
-use crate::blockchain::blockchain_interface::BlockchainResult;
 use crate::sub_lib::peer_actors::BindMessage;
 use actix::Message;
 use actix::Recipient;
@@ -24,6 +24,7 @@ pub struct BlockchainBridgeSubs {
     pub report_accounts_payable: Recipient<ReportAccountsPayable>,
     pub retrieve_transactions: Recipient<RetrieveTransactions>,
     pub ui_sub: Recipient<NodeFromUiMessage>,
+    pub request_transaction_receipts: Recipient<RequestTransactionReceipts>,
 }
 
 impl Debug for BlockchainBridgeSubs {
@@ -32,13 +33,9 @@ impl Debug for BlockchainBridgeSubs {
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Message)]
 pub struct ReportAccountsPayable {
     pub accounts: Vec<PayableAccount>,
-}
-
-impl Message for ReportAccountsPayable {
-    type Result = Result<Vec<BlockchainResult<Payment>>, String>;
 }
 
 #[derive(Clone, PartialEq, Debug, Message)]
@@ -55,21 +52,14 @@ pub struct SetGasPriceMsg {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::test_utils::recorder::Recorder;
+    use crate::test_utils::recorder::{make_blockchain_bridge_subs_from, Recorder};
     use actix::Actor;
-    use masq_lib::ui_gateway::NodeFromUiMessage;
 
     #[test]
     fn blockchain_bridge_subs_debug() {
         let recorder = Recorder::new().start();
 
-        let subject = BlockchainBridgeSubs {
-            bind: recipient!(recorder, BindMessage),
-            report_accounts_payable: recipient!(recorder, ReportAccountsPayable),
-            retrieve_transactions: recipient!(recorder, RetrieveTransactions),
-            ui_sub: recipient!(recorder, NodeFromUiMessage),
-        };
+        let subject = make_blockchain_bridge_subs_from(&recorder);
 
         assert_eq!(format!("{:?}", subject), "BlockchainBridgeSubs");
     }

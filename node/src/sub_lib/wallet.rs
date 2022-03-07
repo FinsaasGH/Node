@@ -3,6 +3,7 @@ use crate::blockchain::bip32::Bip32ECKeyProvider;
 use crate::blockchain::payer::Payer;
 use crate::sub_lib::cryptde;
 use crate::sub_lib::cryptde::PublicKey as CryptdePublicKey;
+use ethereum_types::H160;
 use ethsign::{PublicKey, Signature};
 use rusqlite::types::{FromSql, FromSqlError, ToSqlOutput, Value, ValueRef};
 use rusqlite::ToSql;
@@ -45,7 +46,7 @@ pub enum WalletKind {
 impl Clone for WalletKind {
     fn clone(&self) -> Self {
         match self {
-            WalletKind::Address(address) => WalletKind::Address(Address { 0: address.0 }),
+            WalletKind::Address(address) => WalletKind::Address(H160(address.0)),
             WalletKind::SecretKey(keypair) => WalletKind::SecretKey(
                 Bip32ECKeyProvider::from_raw_secret(keypair.clone_secret().as_ref())
                     .expect("failed to clone once checked secret"),
@@ -124,10 +125,8 @@ impl Wallet {
 
     pub fn address(&self) -> Address {
         match &self.kind {
-            WalletKind::Address(address) => Address { 0: address.0 },
-            WalletKind::PublicKey(public) => Address {
-                0: *public.address(),
-            },
+            WalletKind::Address(address) => H160(address.0),
+            WalletKind::PublicKey(public) => H160(*public.address()),
             WalletKind::SecretKey(key_provider) => key_provider.address(),
             WalletKind::Uninitialized => panic!("No address for an uninitialized wallet!"),
         }
@@ -214,7 +213,7 @@ impl From<H256> for Wallet {
         let mut addr = [0u8; 20];
         addr.copy_from_slice(&address.0[12..32]);
         Self {
-            kind: WalletKind::Address(Address { 0: addr }),
+            kind: WalletKind::Address(H160(addr)),
         }
     }
 }
@@ -278,7 +277,7 @@ impl TryInto<Bip32ECKeyProvider> for Wallet {
 }
 
 impl<'de> serde::Deserialize<'de> for Wallet {
-    fn deserialize<D>(deserializer: D) -> serde::export::Result<Self, D::Error>
+    fn deserialize<D>(deserializer: D) -> serde::__private::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
@@ -291,44 +290,44 @@ impl<'de> serde::Deserialize<'de> for Wallet {
             type Value = WalletField;
             fn expecting(
                 &self,
-                formatter: &mut serde::export::Formatter,
-            ) -> serde::export::fmt::Result {
-                serde::export::Formatter::write_str(formatter, "field identifier")
+                formatter: &mut serde::__private::Formatter,
+            ) -> serde::__private::fmt::Result {
+                serde::__private::Formatter::write_str(formatter, "field identifier")
             }
-            fn visit_u64<E>(self, value: u64) -> serde::export::Result<Self::Value, E>
+            fn visit_u64<E>(self, value: u64) -> serde::__private::Result<Self::Value, E>
             where
                 E: serde::de::Error,
             {
                 match value {
-                    0u64 => serde::export::Ok(WalletField::Address),
-                    _ => serde::export::Err(serde::de::Error::invalid_value(
+                    0u64 => serde::__private::Ok(WalletField::Address),
+                    _ => serde::__private::Err(serde::de::Error::invalid_value(
                         serde::de::Unexpected::Unsigned(value),
                         &"field index 0 <= i < 1",
                     )),
                 }
             }
-            fn visit_str<E>(self, value: &str) -> serde::export::Result<Self::Value, E>
+            fn visit_str<E>(self, value: &str) -> serde::__private::Result<Self::Value, E>
             where
                 E: serde::de::Error,
             {
                 match value {
-                    "address" => serde::export::Ok(WalletField::Address),
-                    _ => serde::export::Ok(WalletField::__Ignore),
+                    "address" => serde::__private::Ok(WalletField::Address),
+                    _ => serde::__private::Ok(WalletField::__Ignore),
                 }
             }
-            fn visit_bytes<E>(self, value: &[u8]) -> serde::export::Result<Self::Value, E>
+            fn visit_bytes<E>(self, value: &[u8]) -> serde::__private::Result<Self::Value, E>
             where
                 E: serde::de::Error,
             {
                 match value {
-                    b"address" => serde::export::Ok(WalletField::Address),
-                    _ => serde::export::Ok(WalletField::__Ignore),
+                    b"address" => serde::__private::Ok(WalletField::Address),
+                    _ => serde::__private::Ok(WalletField::__Ignore),
                 }
             }
         }
         impl<'de> serde::Deserialize<'de> for WalletField {
             #[inline]
-            fn deserialize<D>(deserializer: D) -> serde::export::Result<Self, D::Error>
+            fn deserialize<D>(deserializer: D) -> serde::__private::Result<Self, D::Error>
             where
                 D: serde::Deserializer<'de>,
             {
@@ -336,64 +335,65 @@ impl<'de> serde::Deserialize<'de> for Wallet {
             }
         }
         struct WalletVisitor<'de> {
-            marker: serde::export::PhantomData<Wallet>,
-            lifetime: serde::export::PhantomData<&'de ()>,
+            marker: serde::__private::PhantomData<Wallet>,
+            lifetime: serde::__private::PhantomData<&'de ()>,
             human_readable: bool,
         }
         impl<'de> serde::de::Visitor<'de> for WalletVisitor<'de> {
             type Value = Wallet;
             fn expecting(
                 &self,
-                formatter: &mut serde::export::Formatter,
-            ) -> serde::export::fmt::Result {
-                serde::export::Formatter::write_str(formatter, "struct Wallet")
+                formatter: &mut serde::__private::Formatter,
+            ) -> serde::__private::fmt::Result {
+                serde::__private::Formatter::write_str(formatter, "struct Wallet")
             }
             #[inline]
-            fn visit_seq<A>(self, mut seq: A) -> serde::export::Result<Self::Value, A::Error>
+            fn visit_seq<A>(self, mut seq: A) -> serde::__private::Result<Self::Value, A::Error>
             where
                 A: serde::de::SeqAccess<'de>,
             {
                 let address = match serde::de::SeqAccess::next_element::<Address>(&mut seq)? {
-                    serde::export::Some(address) => address,
-                    serde::export::None => {
-                        return serde::export::Err(serde::de::Error::invalid_length(
+                    serde::__private::Some(address) => address,
+                    serde::__private::None => {
+                        return serde::__private::Err(serde::de::Error::invalid_length(
                             0usize,
                             &"struct Wallet with 1 element",
                         ));
                     }
                 };
-                serde::export::Ok(Wallet {
+                serde::__private::Ok(Wallet {
                     kind: WalletKind::Address(address),
                 })
             }
             #[inline]
-            fn visit_map<A>(self, mut map: A) -> serde::export::Result<Self::Value, A::Error>
+            fn visit_map<A>(self, mut map: A) -> serde::__private::Result<Self::Value, A::Error>
             where
                 A: serde::de::MapAccess<'de>,
             {
-                let mut possible_address: serde::export::Option<Address> = serde::export::None;
-                while let serde::export::Some(key) =
+                let mut possible_address: serde::__private::Option<Address> =
+                    serde::__private::None;
+                while let serde::__private::Some(key) =
                     serde::de::MapAccess::next_key::<WalletField>(&mut map)?
                 {
                     match key {
                         WalletField::Address => {
-                            if serde::export::Option::is_some(&possible_address) {
-                                return serde::export::Err(
+                            if serde::__private::Option::is_some(&possible_address) {
+                                return serde::__private::Err(
                                     <A::Error as serde::de::Error>::duplicate_field("address"),
                                 );
                             }
                             possible_address = match &self.human_readable {
-                                true => {
-                                    serde::export::Some(
-                                        serde::de::MapAccess::next_value::<Address>(&mut map)?,
-                                    )
-                                }
+                                true => serde::__private::Some(serde::de::MapAccess::next_value::<
+                                    Address,
+                                >(
+                                    &mut map
+                                )?),
                                 false => {
                                     let bytes =
                                         serde::de::MapAccess::next_value::<Vec<u8>>(&mut map)?;
                                     let mut address = [0u8; 20];
                                     address.copy_from_slice(bytes.as_slice());
-                                    serde::export::Some(Address { 0: address })
+                                    serde::__private::Some(H160(address))
                                 }
                             }
                         }
@@ -405,23 +405,23 @@ impl<'de> serde::Deserialize<'de> for Wallet {
                     }
                 }
                 let address = match possible_address {
-                    serde::export::Some(address) => address,
-                    serde::export::None => serde::private::de::missing_field("address")?,
+                    serde::__private::Some(address) => address,
+                    serde::__private::None => serde::__private::de::missing_field("address")?,
                 };
-                serde::export::Ok(Wallet {
+                serde::__private::Ok(Wallet {
                     kind: WalletKind::Address(address),
                 })
             }
         }
-        const FIELDS: &[&str] = &["address"];
+
         let human_readable = deserializer.is_human_readable();
         serde::Deserializer::deserialize_struct(
             deserializer,
             "Wallet",
-            FIELDS,
+            &["address"],
             WalletVisitor {
-                marker: serde::export::PhantomData::<Wallet>,
-                lifetime: serde::export::PhantomData,
+                marker: serde::__private::PhantomData::<Wallet>,
+                lifetime: serde::__private::PhantomData,
                 human_readable,
             },
         )
@@ -512,7 +512,7 @@ mod tests {
 
         let result = wallet.string_address_from_keypair();
 
-        assert_eq!(result, "0x30ff09882f583e76e965f21f1893ad9cdf03f02d")
+        assert_eq!(result, "0x28330c4b886fc83bd6e3409a9eae776c19403c2e")
     }
 
     #[test]

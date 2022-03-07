@@ -25,9 +25,7 @@ use websocket::{ClientBuilder, WebSocketResult};
 
 pub const COMPONENT_RESPONSE_TIMEOUT_MILLIS: u64 = 100;
 pub const REDIRECT_TIMEOUT_MILLIS: u64 = 500;
-//used to be 500 then 1000; but we have suspicion that Actions (Windows) doesn't make it and needs more;
-//the last attempt is exaggerated on purpose to find out if we ever can fix it by changing the time amount
-pub const FALLBACK_TIMEOUT_MILLIS: u64 = 60_000;
+pub const FALLBACK_TIMEOUT_MILLIS: u64 = 5000; //used to be 1000; but we have suspicion that Actions doesn't make it and needs more
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum OutgoingMessageType {
@@ -573,6 +571,13 @@ mod tests {
     use std::sync::{Arc, Mutex};
     use std::thread;
     use std::time::Duration;
+
+    #[test]
+    fn constants_have_correct_values() {
+        assert_eq!(COMPONENT_RESPONSE_TIMEOUT_MILLIS, 100);
+        assert_eq!(REDIRECT_TIMEOUT_MILLIS, 500);
+        assert_eq!(FALLBACK_TIMEOUT_MILLIS, 5000);
+    }
 
     struct BroadcastHandleMock {
         send_params: Arc<Mutex<Vec<MessageBody>>>,

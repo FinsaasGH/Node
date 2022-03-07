@@ -5,9 +5,9 @@ use crate::neighborhood::neighborhood_database::{NeighborhoodDatabase, Neighborh
 use crate::neighborhood::node_record::NodeRecord;
 use crate::neighborhood::AccessibleGossipRecord;
 use crate::sub_lib::cryptde::{CryptDE, PublicKey};
-use crate::sub_lib::logger::Logger;
 use crate::sub_lib::neighborhood::GossipFailure_0v1;
 use crate::sub_lib::node_addr::NodeAddr;
+use masq_lib::logger::Logger;
 use std::collections::HashSet;
 use std::net::{IpAddr, SocketAddr};
 
@@ -1128,6 +1128,11 @@ mod tests {
     use masq_lib::test_utils::utils::TEST_DEFAULT_CHAIN;
     use std::convert::TryInto;
     use std::str::FromStr;
+
+    #[test]
+    fn constants_have_correct_values() {
+        assert_eq!(MAX_DEGREE, 5);
+    }
 
     #[derive(Clone, Copy, Debug, PartialEq)]
     enum Mode {

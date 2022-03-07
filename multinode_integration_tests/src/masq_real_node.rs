@@ -210,7 +210,7 @@ impl NodeStartupConfig {
         args
     }
 
-    fn to_strings(strs: Vec<&str>) -> Vec<String> {
+    fn slices_to_strings(strs: Vec<&str>) -> Vec<String> {
         strs.into_iter().map(|x| x.to_string()).collect()
     }
 
@@ -219,7 +219,7 @@ impl NodeStartupConfig {
             (EarningWalletInfo::None, ConsumingWalletInfo::None) => return None,
             (EarningWalletInfo::None, ConsumingWalletInfo::PrivateKey(_)) => return None,
             (EarningWalletInfo::None, ConsumingWalletInfo::DerivationPath(phrase, path)) => {
-                Self::to_strings(vec![
+                Self::slices_to_strings(vec![
                     "--recover-wallet",
                     "--data-directory",
                     DATA_DIRECTORY,
@@ -238,7 +238,7 @@ impl NodeStartupConfig {
             (
                 EarningWalletInfo::Address(address),
                 ConsumingWalletInfo::DerivationPath(phrase, path),
-            ) => Self::to_strings(vec![
+            ) => Self::slices_to_strings(vec![
                 "--recover-wallet",
                 "--data-directory",
                 DATA_DIRECTORY,
@@ -254,7 +254,7 @@ impl NodeStartupConfig {
                 address,
             ]),
             (EarningWalletInfo::DerivationPath(phrase, path), ConsumingWalletInfo::None) => {
-                Self::to_strings(vec![
+                Self::slices_to_strings(vec![
                     "--recover-wallet",
                     "--data-directory",
                     DATA_DIRECTORY,
@@ -271,7 +271,7 @@ impl NodeStartupConfig {
             (
                 EarningWalletInfo::DerivationPath(phrase, path),
                 ConsumingWalletInfo::PrivateKey(_),
-            ) => Self::to_strings(vec![
+            ) => Self::slices_to_strings(vec![
                 "--recover-wallet",
                 "--data-directory",
                 DATA_DIRECTORY,
@@ -294,7 +294,7 @@ impl NodeStartupConfig {
                         self.earning_wallet_info, self.consuming_wallet_info
                     )
                 }
-                Self::to_strings(vec![
+                Self::slices_to_strings(vec![
                     "--recover-wallet",
                     "--data-directory",
                     DATA_DIRECTORY,
@@ -347,8 +347,7 @@ impl NodeStartupConfig {
                 Some(Wallet::from(keypair))
             }
             ConsumingWalletInfo::DerivationPath(phrase, derivation_path) => {
-                let mnemonic =
-                    Mnemonic::from_phrase(phrase.to_string(), Language::English).unwrap();
+                let mnemonic = Mnemonic::from_phrase(phrase, Language::English).unwrap();
                 let keypair = Bip32ECKeyProvider::try_from((
                     Seed::new(&mnemonic, "passphrase").as_ref(),
                     derivation_path.as_str(),

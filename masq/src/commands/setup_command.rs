@@ -1,9 +1,7 @@
 // Copyright (c) 2019, MASQ (https://masq.ai) and/or its affiliates. All rights reserved.
 
 use crate::command_context::CommandContext;
-use crate::commands::commands_common::{
-    transaction, Command, CommandError, STANDARD_COMMAND_TIMEOUT_MILLIS,
-};
+use crate::commands::commands_common::{transaction, Command, CommandError};
 use crate::terminal::terminal_interface::TerminalWrapper;
 use clap::{value_t, App, SubCommand};
 use masq_lib::as_any_impl;
@@ -19,9 +17,13 @@ use std::any::Any;
 use std::fmt::Debug;
 use std::io::Write;
 
+pub const SETUP_COMMAND_TIMEOUT_MILLIS: u64 = 30000;
+
+const SETUP_COMMAND_ABOUT: &str =
+    "Establishes (if Node is not already running) and displays startup parameters for MASQNode.";
+
 pub fn setup_subcommand() -> App<'static, 'static> {
-    shared_app(SubCommand::with_name("setup")
-        .about("Establishes (if Node is not already running) and displays startup parameters for MASQNode."))
+    shared_app(SubCommand::with_name("setup").about(SETUP_COMMAND_ABOUT))
 }
 
 #[derive(Debug, PartialEq)]
@@ -35,7 +37,7 @@ impl Command for SetupCommand {
             values: self.values.clone(),
         };
         let result: Result<UiSetupResponse, CommandError> =
-            transaction(out_message, context, STANDARD_COMMAND_TIMEOUT_MILLIS);
+            transaction(out_message, context, SETUP_COMMAND_TIMEOUT_MILLIS);
         match result {
             Ok(response) => {
                 Self::dump_setup(UiSetupInner::from(response), context.stdout());
@@ -148,6 +150,15 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     #[test]
+    fn constants_have_correct_values() {
+        assert_eq!(SETUP_COMMAND_TIMEOUT_MILLIS, 30000);
+        assert_eq!(
+            SETUP_COMMAND_ABOUT,
+            "Establishes (if Node is not already running) and displays startup parameters for MASQNode."
+         );
+    }
+
+    #[test]
     fn setup_command_with_syntax_error() {
         let msg = SetupCommand::new(&["setup".to_string(), "--booga".to_string()])
             .err()
@@ -214,7 +225,7 @@ mod tests {
                     ]
                 }
                 .tmb(0),
-                STANDARD_COMMAND_TIMEOUT_MILLIS
+                SETUP_COMMAND_TIMEOUT_MILLIS
             )]
         );
         assert_eq! (stdout_arc.lock().unwrap().get_string(),
@@ -273,7 +284,7 @@ neighbors              masq://eth-mainnet:95VjByq5tEUUpDcczA__zXWGE6-7YFEvzN4CDV
                     ]
                 }
                 .tmb(0),
-                STANDARD_COMMAND_TIMEOUT_MILLIS
+                SETUP_COMMAND_TIMEOUT_MILLIS
             )]
         );
         assert_eq! (stdout_arc.lock().unwrap().get_string(),
