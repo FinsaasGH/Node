@@ -1,9 +1,9 @@
 // Copyright (c) 2019, MASQ (https://masq.ai) and/or its affiliates. All rights reserved.
+#[allow(unused_imports)]
 use crossbeam_channel::unbounded;
 use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 #[allow(unused_imports)]
-use std::sync::mpsc::channel;
 use std::thread;
 
 #[allow(dead_code)]
@@ -103,7 +103,7 @@ fn multicast_udp_test() {
             }
             Err(err) => {
                 println!("client: had a problem: {}", err);
-                assert!(false);
+                panic!()
             }
         }
         match receiver2.recv_from(&mut buffer2) {
