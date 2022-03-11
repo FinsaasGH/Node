@@ -47,7 +47,7 @@ fn run_receiver() {
             }
             Err(err) => {
                 println!("client: had a problem: {}", err);
-                assert!(false);
+                panic!();
             }
         }
     })
@@ -116,7 +116,7 @@ fn multicast_udp_test() {
             }
             Err(err) => {
                 println!("client: had a problem: {}", err);
-                assert!(false);
+                panic!();
             }
         }
         match receiver3.recv_from(&mut buffer3) {
@@ -129,7 +129,7 @@ fn multicast_udp_test() {
             }
             Err(err) => {
                 println!("client: had a problem: {}", err);
-                assert!(false);
+                panic!();
             }
         }
     })
