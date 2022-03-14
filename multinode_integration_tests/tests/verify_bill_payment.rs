@@ -320,7 +320,7 @@ fn assert_balances(
             "TokenBalance"
         );
     } else {
-        assert!(false, "Failed to retrieve balances {}", wallet);
+        panic!("Failed to retrieve balances {}", wallet);
     }
 }
 

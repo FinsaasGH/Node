@@ -707,7 +707,7 @@ mod tests {
         assert_ne!(actual.kind, expected.kind);
         match actual.kind {
             WalletKind::Address(address) => assert_eq!(address, expected.address()),
-            _ => assert!(false, "Failed to match expected WalletKind::Address"),
+            _ => panic!("Failed to match expected WalletKind::Address"),
         }
     }
 
