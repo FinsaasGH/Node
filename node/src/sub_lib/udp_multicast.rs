@@ -5,6 +5,8 @@ use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 #[allow(unused_imports)]
 use std::thread;
+#[allow(unused_imports)]
+use std::time::Duration;
 
 #[allow(dead_code)]
 //multicast IP address must that is shared between any number of subscribers
@@ -109,6 +111,15 @@ fn multicast_udp_test() {
     let mut buffer3 = [0; 64];
     //socket address to use for send_to later on, must be the same multicast group and port we set for the receiver
     let addr = &SockAddr::from(SocketAddr::new(MULTICAST_GROUP_ADDRESS.into(), MCAST_PORT));
+    receiver1
+        .set_read_timeout(Some(Duration::from_millis(100)))
+        .expect("could not set read timeout");
+    receiver2
+        .set_read_timeout(Some(Duration::from_millis(100)))
+        .expect("could not set read timeout");
+    receiver3
+        .set_read_timeout(Some(Duration::from_millis(100)))
+        .expect("could not set read timeout");
     //easy way to send/receive 10 messages
     (0..10).for_each(|x| {
         println!("sending multicast message to group");
