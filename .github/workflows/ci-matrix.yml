@@ -1,10 +1,11 @@
 name: ci-matrix
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  push:
     branches:
-      - master
+      # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#onpushpull_requestbranchestags
+      - 'release/**'
+      - 'hotfix/**'
 
 jobs:
   build:
@@ -43,7 +44,7 @@ jobs:
           ./ci/collect_results.sh
         shell: bash
       - name: Publish ${{ matrix.os }}
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: Build Results ${{ matrix.os }}
           path: results
