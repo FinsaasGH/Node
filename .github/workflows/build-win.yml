@@ -1,4 +1,4 @@
-name: Electron build - Windows
+name: Node build - Windows
 
 on:
   push:
