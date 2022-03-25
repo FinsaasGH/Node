@@ -1,0 +1,65 @@
+name: build-ubuntu-latest
+
+on:
+  workflow_dispatch:
+    inputs: 
+      tags:
+        description: 'Version tag for release'
+        default: 'v0.1.0'
+        required: true 
+        type: string
+      environment:
+        description: 'Environment to run tests against'
+        type: environment
+        required: true
+  push:
+    branches:
+      # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#onpushpull_requestbranchestags
+      - 'release/**'
+      - 'hotfix/**'
+
+jobs:
+  print-tag:
+    runs-on: ubuntu-latest
+    if:  ${{ github.event.inputs.tags == 'true' }} 
+    steps:
+      - name: Print the input tag to STDOUT
+        run: echo  The tag is ${{ github.event.inputs.tag }}
+  build:
+    name: Build node on ubuntu-latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache sccache results
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.cargo/cache
+          key: ${{ runner.os }}-0001
+      - name: Build ubuntu-latest
+        run: |
+          rustup check
+          case "$OSTYPE" in
+            msys)
+              echo "Windows doesn't like it when rustup updates itself"
+              rustup update --no-self-update stable
+              ;;
+            *)
+              echo "Linux and macOS don't need manual suppression of rustup self update"
+              rustup update stable
+              ;;
+          esac
+          rustup check
+          rustup component add rustfmt
+          rustup component add clippy
+          ./ci/all.sh
+          ./ci/multinode_integration_test.sh
+          ./ci/collect_results.sh
+        shell: bash
+      - name: Publish ubuntu-latest
+        uses: actions/upload-artifact@v3
+        with:
+          name: Build Results ubuntu-latest-${{ github.event.inputs.tag }}
+          path: results
+          
