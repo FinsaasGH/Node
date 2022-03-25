@@ -16,7 +16,7 @@ jobs:
         run: echo '::set-output name=RELEASE_VERSION::v0.1.0'
         id: release-version-number
       - name: Get release version
-        run: echo "The version number is ${{ steps.release-version-number.outputs.RELEASE_VERSION }}"
+        run: echo "The version number is: ${{ steps.release-version-number.outputs.RELEASE_VERSION }}"
       - uses: actions/checkout@v3
       - name: Cache sccache results
         uses: actions/cache@v3
