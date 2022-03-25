@@ -21,7 +21,7 @@ on:
 jobs:
   print-tag:
     runs-on: windows-latest
-    if:  ${{ github.event.inputs.print_tags == 'true' }} 
+    if:  ${{ github.event.inputs.tags == 'true' }} 
     steps:
       - name: Print the input tag to STDOUT
         run: echo  The tag is ${{ github.event.inputs.tag }}
