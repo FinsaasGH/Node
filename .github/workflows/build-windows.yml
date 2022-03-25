@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
     inputs: 
       tags:
-        description: 'v0.1.0'
+        description: 'Version tag for release'
+        default: 'v0.1.0'
         required: true 
         type: string
       environment:
