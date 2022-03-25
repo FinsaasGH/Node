@@ -40,9 +40,6 @@ jobs:
   build:
     name: Build node on windows-latest
     runs-on: windows-latest
-    strategy:
-      matrix:
-        os:
     steps:
       - uses: actions/checkout@v3
       - name: Cache sccache results
