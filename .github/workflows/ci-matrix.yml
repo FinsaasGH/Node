@@ -56,5 +56,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Build Results ${{ matrix.os }}
-          path: results
-          
+          path: results/generated/bin
