@@ -1,11 +1,10 @@
 name: ci-matrix
 
 on:
-  push:
+  pull_request:
+    types: [opened, synchronize]
     branches:
-      # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#onpushpull_requestbranchestags
-      - 'release/**'
-      - 'hotfix/**'
+      - master
 
 jobs:
   build:
@@ -43,17 +42,8 @@ jobs:
           ./ci/multinode_integration_test.sh
           ./ci/collect_results.sh
         shell: bash
-        
-      - run:   |
-         upload_url=$(curl -sL https://api.github.com/repos/actions/checkout/releases/latest | jq -r '.upload_url')
-         echo UPLOAD_URL=$upload_url >> $GITHUB_ENV
-         shell: bash
-
-      - uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ env.UPLOAD_URL }}
       - name: Publish ${{ matrix.os }}
         uses: actions/upload-artifact@v3
         with:
-          name: Build Results ${{ matrix.os }}
+          name: Node-${{ matrix.os }}
           path: results/generated/bin
