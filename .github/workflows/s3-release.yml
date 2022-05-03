@@ -4,7 +4,7 @@ on:
     workflows: ["ci-matrix"]
     types: [requested]
     branches:
-      - 'releases/**'
+      - 'release/**'
 
 jobs:         
   deploy_to_s3:
