@@ -1,19 +1,11 @@
 name: s3-release
-on:
-  workflow_run:
-    workflows: ["ci-matrix"]
-    types: [requested]
-    branches:
-      - master
-      - 'release/**'
-name: ci-matrix
 
 on:
   pull_request:
     types: [opened, synchronize]
     branches:
       - master
-      - 'releases/**'
+      
 jobs:
   build:
     strategy:
@@ -60,14 +52,6 @@ jobs:
         with:
           name: Node-${{ matrix.target.name }}
           path: results/generated/bin
-          
-on:
-  workflow_run:
-    workflows: ["ci-matrix"]
-    types: [requested]
-    branches:
-      - master
-      - 'release/**'
   deploy_to_s3:
        needs: ["build"]
        runs-on: ubuntu-latest
