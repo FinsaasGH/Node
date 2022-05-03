@@ -3,7 +3,7 @@ name: ci-matrix
 on:
   pull_request:
     types: [opened, synchronize]
-    branches: [master]
+    branches: [master, 'releases/**']
 
 jobs:
   build:
