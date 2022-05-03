@@ -4,6 +4,7 @@ on:
     workflows: ["ci-matrix"]
     types: [requested]
     branches:
+      - master
       - 'release/**'
 
 jobs:         
