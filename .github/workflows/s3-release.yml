@@ -3,7 +3,7 @@ name: s3-release
 on:
   push:
     tags:
-      - v*
+      - 'v*'
       
 jobs:
   build:
