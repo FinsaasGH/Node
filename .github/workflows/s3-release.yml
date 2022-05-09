@@ -2,9 +2,6 @@ name: s3-release
 
 on:
   push:
-    branches:
-      - master
-      - 'releases/**'
     tags:
       - v*
       
