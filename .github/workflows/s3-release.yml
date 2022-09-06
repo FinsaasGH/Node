@@ -13,6 +13,6 @@ jobs:
         - name: 'Echo github events'
           run: |
             echo ${{ github.ref_name }}
-            echo ${{ github.event.pull_request.number }}
-            echo ${{ github.event.pull_request.pull_request }}
+            echo ${{ github.event.workflow_run.head_branch }}
+            echo ${{ github.event.workflow_run.head_sha }}
             echo ${{ github.event.workflow_run.id }}
