@@ -9,4 +9,4 @@ jobs:
        steps:
         - name: 'Echo download path'
           run: |
-            echo ${{ GITHUB_REF_NAME }}
+            echo ${{ github.ref_name }}
