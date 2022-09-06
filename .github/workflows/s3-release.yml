@@ -8,4 +8,5 @@ jobs:
        runs-on: ubuntu-latest
        steps:
         - name: 'Echo download path'
-          run: echo github.head_ref
+          run: |
+            echo ${{ GITHUB_REF_NAME }}
