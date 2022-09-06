@@ -4,8 +4,7 @@ on:
   push:
 
 jobs:
-   run_if:
-       if:  startsWith(github.head_ref, 'v*')
+   build:
        runs-on: ubuntu-latest
        steps:
         - name: 'Echo download path'
