@@ -1,12 +1,15 @@
 name: s3-release
 
 on:
-  pull-request:
-
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - master
+      
 jobs:
    build:
        runs-on: ubuntu-latest
        steps:
-        - name: 'Echo download path'
+        - name: 'Echo originating branch'
           run: |
             echo ${{ github.ref_name }}
