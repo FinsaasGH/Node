@@ -2,18 +2,57 @@ name: s3-release
 
 on:
   workflow_run:
-    workflows: [latest-release]
+    workflows: [ci-matrix]
     types:
       - completed
 
 jobs:
-   echo:
+  download_artifacts:
+       if: github.event.pull_request.merged == true
        runs-on: ubuntu-22.04
        steps:
-        - name: 'Echo github events'
+        - name: Download artifacts from complete actions run
           run: |
-            echo ${{ github.ref_name }}
-            echo ${{ github.head_ref_name }}
-            echo ${{ github.event.workflow_run.head_branch }}
-            echo ${{ github.event.workflow_run.head_sha }}
-            echo ${{ github.event.workflow_run.id }}
+            mkdir download
+            cd download
+            gh run download ${{ github.event.workflow_run.id }}
+  deploy_to_versioned_s3:
+       needs: ["download_artifacts"]
+       runs-on: ubuntu-22.04
+       steps:
+        - name: Display structure of downloaded files
+          run: ls -R
+        - name: 'Echo download path'
+          run: echo ${{steps.download.outputs.download-path}}
+        - name: S3 Sync
+          uses: jakejarvis/s3-sync-action@v0.5.1
+          with:
+           args: --acl private --follow-symlinks --delete
+          env:
+            AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_REGION: 'us-west-2'
+            DEST_DIR: 'Node/${{ github.head_ref }}'
+            SOURCE_DIR: ${{ steps.download.outputs.download-path }}
+  deploy_to_latest_s3:
+       needs: ["download_artifacts"]
+       runs-on: ubuntu-22.04
+       steps:
+        - uses: actions/download-artifact@v3
+          id: download
+        - name: Display structure of downloaded files
+          run: ls -R
+        - name: 'Echo download path'
+          run: echo ${{steps.download.outputs.download-path}}
+        - name: S3 Sync
+          uses: jakejarvis/s3-sync-action@v0.5.1
+          with:
+           args: --acl private --follow-symlinks --delete
+          env:
+            AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_REGION: 'us-west-2'
+            DEST_DIR: 'Node/latest'
+            SOURCE_DIR: ${{ steps.download.outputs.download-path }}
