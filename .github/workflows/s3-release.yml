@@ -3,7 +3,7 @@ name: s3-release
 on:
   push:
     branches: [master]
-    
+
 jobs:
    build:
        runs-on: ubuntu-latest
