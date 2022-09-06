@@ -1,13 +1,16 @@
 name: s3-release
 
 on:
-  push:
-    branches: [master]
+  pull_request:
+    types:
+      - closed
 
 jobs:
    build:
-       runs-on: ubuntu-latest
+       if: github.event.pull_request.merged == true
+       runs-on: ubuntu-22.04
        steps:
         - name: 'Echo download path'
           run: |
             echo ${{ github.ref_name }}
+            echo ${{ github.event.pull_request }}
