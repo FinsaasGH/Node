@@ -1,13 +1,13 @@
 name: s3-release
 
 on:
-  pull_request:
+  workflow_run:
+    workflows: [latest-release]
     types:
-      - closed
+      - completed
 
 jobs:
-   build:
-       if: github.event.pull_request.merged == true
+   echo:
        runs-on: ubuntu-22.04
        steps:
         - name: 'Echo github events'
