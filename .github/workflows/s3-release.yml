@@ -8,7 +8,7 @@ on:
 
 jobs:
   download_artifacts:
-       if: github.event.pull_request.merged == true
+       if: github.event.pull_request.head.sha == github.event.workflow_run.head_sha
        runs-on: ubuntu-22.04
        steps:
         - name: Download artifacts from complete actions run
@@ -16,8 +16,13 @@ jobs:
             mkdir download
             cd download
             gh run download ${{ github.event.workflow_run.id }}
+        - name: Publish artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            path: download/*
   deploy_to_versioned_s3:
        needs: ["download_artifacts"]
+       if: startsWith(github.head_ref, 'v*') != true
        runs-on: ubuntu-22.04
        steps:
         - name: Display structure of downloaded files
@@ -37,6 +42,7 @@ jobs:
             SOURCE_DIR: ${{ steps.download.outputs.download-path }}
   deploy_to_latest_s3:
        needs: ["download_artifacts"]
+       if: startsWith(github.head_ref, 'v*') == true
        runs-on: ubuntu-22.04
        steps:
         - uses: actions/download-artifact@v3
