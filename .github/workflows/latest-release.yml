@@ -1,8 +1,7 @@
 name: latest-release
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  push:
     branches:
       - master
 
