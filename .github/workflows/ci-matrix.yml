@@ -12,9 +12,9 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - { name: linux, os: ubuntu-22.04 }
-          - { name: macos, os: macos-12 }
-          - { name: windows, os: windows-2022 }
+          - { name: linux, os: ubuntu-latest }
+          - { name: macos, os: macos-latest }
+          - { name: windows, os: windows-latest }
 
     name: Build node on ${{ matrix.target.os }}
     runs-on: ${{ matrix.target.os }}
@@ -25,8 +25,14 @@ jobs:
         env:
           cache-name: cache-node-modules
         with:
-          path: ~/.cargo/cache
-          key: ${{ runner.os }}-0001
+         path: |
+            ~/.cargo/cache/
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Build ${{ matrix.target.os }}
         run: |
           rustup check
