@@ -2,7 +2,7 @@ name: latest-release
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, reopen, synchronize]
     branches:
       - master
 
