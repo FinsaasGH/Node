@@ -14,3 +14,6 @@ jobs:
           run: |
             echo ${{ github.head_ref }}
             echo ${{ github.event.pull_request.head.sha }}
+            echo ${{ github.event.pull_request.number }}
+            echo ${{ github.event.workflow_job.id }}
+            echo ${{ github.event.workflow_job.run_id }}
