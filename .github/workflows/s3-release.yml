@@ -10,7 +10,7 @@ jobs:
        if: github.event.pull_request.merged == true
        runs-on: ubuntu-22.04
        steps:
-        - name: 'Echo download path'
+        - name: 'Echo github events'
           run: |
             echo ${{ github.ref_name }}
             echo ${{ github.event.pull_request }}
