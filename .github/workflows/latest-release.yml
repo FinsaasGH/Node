@@ -13,3 +13,4 @@ jobs:
         - name: 'Echo download path'
           run: |
             echo ${{ github.head_ref }}
+            echo ${{ github.event.pull_request.head.sha }}
