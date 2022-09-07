@@ -8,16 +8,9 @@ on:
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-          - { name: linux, os: ubuntu-22.04 }
-          - { name: macos, os: macos-12 }
-          - { name: windows, os: windows-2022 }
 
-    name: Build node on ${{ matrix.target.os }}
-    runs-on: ${{ matrix.target.os }}
+    name: Build node on ubuntu
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Cache sccache results
@@ -25,9 +18,15 @@ jobs:
         env:
           cache-name: cache-node-modules
         with:
-          path: ~/.cargo/cache
-          key: ${{ runner.os }}-0001
-      - name: Build ${{ matrix.target.os }}
+         path: |
+            ~/.cargo/cache/
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build ubuntu-latest
         run: |
           rustup check
           case "$OSTYPE" in
@@ -43,12 +42,9 @@ jobs:
           rustup check
           rustup component add rustfmt
           rustup component add clippy
-          ./ci/all.sh
-          ./ci/multinode_integration_test.sh
-          ./ci/collect_results.sh
         shell: bash
-      - name: Publish ${{ matrix.target.os }}
+      - name: Publish ubuntu-latest
         uses: actions/upload-artifact@v3
         with:
-          name: Node-${{ matrix.target.name }}
-          path: results
+          name: Node-linux
+          path: masq
