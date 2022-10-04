@@ -7,23 +7,18 @@ on:
 
 jobs:
   successful_test:
-       if: startsWith(github.head_ref, 'v*') != true
+       if: ${{ startsWith(github.head_ref, 'v*') != true }} && ${{ github.event.workflow_run.conclusion == 'success' }}
        runs-on: ubuntu-latest
        env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
        steps:
         - uses: actions/checkout@v3
-        - name: "Set flag from conclusion"
-          env:
-            COMMIT_VAR: ${{ contains(github.event.workflow_run.conclusion, 'success') }}
-          run: |
-            if ${COMMIT_VAR} == true; then
-              echo "flag=true" >> $GITHUB_ENV
-              echo "flag set to true"
-            else
-              echo "flag=false" >> $GITHUB_ENV
-              echo "flag set to false"
-            fi
-        - name: "Use flag if true"
-          if: env.flag
-          run: echo "Flag is available and true"
+        - run: echo "This test was a success"
+  unsuccessful_test:
+       if: ${{ startsWith(github.head_ref, 'v*') != true }} && ${{ github.event.workflow_run.conclusion != 'success' }}
+       runs-on: ubuntu-latest
+       env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       steps:
+        - uses: actions/checkout@v3     
+        - run: echo "This test was a failure"
