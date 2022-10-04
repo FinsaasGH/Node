@@ -7,7 +7,7 @@ on:
 
 jobs:
   successful_test:
-       if: startsWith(github.head_ref, 'v*') != true and ${{ github.event.check_run.conclusion }} == success
+       if: startsWith(github.head_ref, 'v*') != true and startsWith(github.event.workflow_run.conclusion, 'success') == true
        runs-on: ubuntu-latest
        env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -17,7 +17,7 @@ jobs:
           run: |
             echo "the test was a success"
   unsuccessful_test:
-       if: startsWith(github.head_ref, 'v*') != true and ${{ github.event.check_run.conclusion }} == failure
+       if: startsWith(github.head_ref, 'v*') != true and startsWith(github.event.workflow_run.conclusion, 'success') != true
        runs-on: ubuntu-latest
        env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
