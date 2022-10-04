@@ -3,12 +3,11 @@ name: s3-release
 on:
   workflow_run:
     workflows: [ci-matrix]
-    types:
-      - completed
+    types: [completed]
 
 jobs:
   deploy_to_versioned_s3:
-       if: startsWith(github.head_ref, 'v*') != true
+       if: startsWith(github.head_ref, 'v*') != true and ${{workflow_run.conclusion}} == true
        runs-on: ubuntu-latest
        steps:
         - uses: actions/checkout@v3
