@@ -6,12 +6,23 @@ on:
     types: [completed]
 
 jobs:
-  deploy_to_versioned_s3:
-       if: startsWith(github.head_ref, 'v*') != true and ${{ github.event.workflow_run.conclusion }} == true
+  successful_test:
+       if: startsWith(github.head_ref, 'v*') != true and ${{ github.event.workflow_run.conclusion }} == success
        runs-on: ubuntu-latest
        env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
        steps:
         - uses: actions/checkout@v3
-        - name: Display structure of downloaded files
-          run: ls -R download
+        - name: Echo results
+          run: |
+            echo "the test was a success"
+  unsuccessful_test:
+       if: startsWith(github.head_ref, 'v*') != true and ${{ github.event.workflow_run.conclusion }} != success
+       runs-on: ubuntu-latest
+       env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       steps:
+        - uses: actions/checkout@v3
+        - name: Echo results
+          run: |
+            echo "the test was NOT a success"
