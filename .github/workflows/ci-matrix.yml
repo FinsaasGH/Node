@@ -3,8 +3,7 @@ name: ci-matrix
 on:
   pull_request:
     types: [opened, reopened, synchronize]
-    branches:
-      - master
+    branches: [master]
 
 jobs:
   build:
@@ -31,28 +30,3 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.OS }}-cargo-
-      - name: Build ${{ matrix.target.os }}
-        run: |
-          rustup check
-          case "$OSTYPE" in
-            msys)
-              echo "Windows doesn't like it when rustup updates itself"
-              rustup update --no-self-update stable
-              ;;
-            *)
-              echo "Linux and macOS don't need manual suppression of rustup self update"
-              rustup update stable
-              ;;
-          esac
-          rustup check
-          rustup component add rustfmt
-          rustup component add clippy
-          ./ci/all.sh
-          ./ci/multinode_integration_test.sh
-          ./ci/collect_results.sh
-        shell: bash
-      - name: Publish ${{ matrix.target.os }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: Node-${{ matrix.target.name }}
-          path: results
