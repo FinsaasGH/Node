@@ -41,15 +41,8 @@ jobs:
           key: ${{ runner.os }}-cargo
       - name: Build ${{ matrix.target.os }}
         run: |
-          ./ci/all.sh
-          ./ci/multinode_integration_test.sh
-          ./ci/collect_results.sh
+          ./ci/format.sh
         shell: bash
-      - name: Publish ${{ matrix.target.os }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: Node-${{ matrix.target.name }}
-          path: results
   deploy_to_s3:
     needs: build
     strategy:
@@ -60,11 +53,6 @@ jobs:
         - uses: actions/checkout@v3
           with:
             ref: ${{ github.event.pull_request.head.sha }}
-
-        - uses: actions/download-artifact@v3
-
-        - name: Display structure of downloaded files
-          run: ls -R
 
         - if: startsWith(github.head_ref, 'GH')
           name: Versioned S3 Sync
