@@ -15,5 +15,10 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: testing ls
-        run: ls; cd node; ls; cd ..; ls
+        run: |
+          ls
+          cd node
+          ls
+          cd ../masq
+          ls
       
