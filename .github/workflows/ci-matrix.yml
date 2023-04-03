@@ -9,15 +9,15 @@ on:
 jobs:
   build:
     name: Build node
-    runs-on: [ubuntu-22.04, windows-2022, macos-12]
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, macos-12, windows-2022]
+    runs-on: ${{ matrix.os }}
+    env:
+      $CI_DIR: pwd
     steps:
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: testing ls
-        run: |
-          ls
-          cd node/ci
-          ls
-          cd ../automap
-          ls
+        run: $CI_DIR
