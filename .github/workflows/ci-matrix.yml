@@ -19,10 +19,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: testing ls
         run: |
+          pwd
           ls
-          cd node/ci
-          ls
-          cd ..
-          cd automap
+          cd ~
+          pwd
           ls
       
