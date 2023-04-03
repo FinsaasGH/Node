@@ -22,5 +22,10 @@ jobs:
           components: rustfmt, clippy
           override: true
       - name: testing ls
-        run: ls; cd node; ls; cd ..; ls
+        run: |
+          ls
+          cd node
+          ls
+          cd ../automap
+          ls
       
