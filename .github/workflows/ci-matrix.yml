@@ -8,22 +8,17 @@ on:
 
 jobs:
   build:
-    name: Build node onubuntu-22.04
-    runs-on: ubuntu-22.04
+    name: Build node
+    runs-on: [ubuntu-22.04, windows-2022, macos-12]
     steps:
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - name: Stable with rustfmt and clippy
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: 1.63.0
-          components: rustfmt, clippy
-          override: true
       - name: testing ls
         run: |
           ls
           cd node/ci
+          ls
+          cd ../automap
           ls
       
