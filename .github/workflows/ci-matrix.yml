@@ -21,5 +21,4 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: testing ls
         run: |
-          echo $CI_DIR
-          echo $GITHUB_WORKSPACE
+          echo ${{ github.workspace }}
