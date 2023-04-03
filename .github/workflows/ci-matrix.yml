@@ -24,8 +24,6 @@ jobs:
       - name: testing ls
         run: |
           ls
-          cd node
-          ls
-          cd ../automap
+          cd node/ci
           ls
       
