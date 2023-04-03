@@ -17,8 +17,5 @@ jobs:
       - name: testing ls
         run: |
           ls
-          cd node
+          cd node/ci
           ls
-          cd ../masq
-          ls
-      
