@@ -22,6 +22,7 @@ jobs:
           ls
           cd node/ci
           ls
-          cd ../automap
+          cd ..
+          cd automap
           ls
       
