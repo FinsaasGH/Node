@@ -1,14 +1,149 @@
 version: 2.1
-parameters:
-  GHA_Actor:
-    type: string
-    default: ""
-  GHA_Action:
-    type: string
-    default: ""
-  GHA_Event:
-    type: string
-    default: ""
-  GHA_Meta:
-    type: string
-    default: ""
+
+executors:
+  ubuntu-executor:
+    docker:
+      - image: circleci/rust:latest
+    environment:
+      RUST_CACHE_PREFIX_KEY: "rust-cache"
+  macos-executor:
+    macos:
+      xcode: "13.0.0"
+    environment:
+      RUST_CACHE_PREFIX_KEY: "rust-cache"
+  windows-executor:
+    machine:
+      image: windows-server-2019-vm-vs2019
+    environment:
+      RUST_CACHE_PREFIX_KEY: "rust-cache"
+
+commands:
+  rust_cache:
+    description: "Caching Rust dependencies"
+    parameters:
+      shared_key:
+        type: string
+    steps:
+      - restore_cache:
+          keys:
+            - v1-<< parameters.shared_key >>-{{ .Environment.RUST_CACHE_PREFIX_KEY }}-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - save_cache:
+          key: v1-<< parameters.shared_key >>-{{ .Environment.RUST_CACHE_PREFIX_KEY }}-{{ arch }}-{{ checksum "Cargo.lock" }}
+          paths:
+            - "target"
+            - "~/.cargo"
+
+jobs:
+  format:
+    executor: ubuntu-executor
+    steps:
+      - checkout
+      - rust_cache:
+          shared_key: "format"
+      - run:
+          name: Run format
+          command: ./ci/format.sh
+
+  multinode_test:
+    executor: ubuntu-executor
+    steps:
+      - checkout
+      - rust_cache:
+          shared_key: "multinode-test"
+      - run:
+          name: Run multinode integration test
+          command: ./ci/multinode_integration_test.sh
+
+  lint:
+    parameters:
+      os:
+        type: string
+    executor: << parameters.os >>-executor
+    steps:
+      - checkout
+      - rust_cache:
+          shared_key: "lint"
+      - run:
+          name: Lint << parameters.os >>
+          command: ./ci/lint.sh
+
+  unit_tests:
+    parameters:
+      os:
+        type: string
+    executor: << parameters.os >>-executor
+    steps:
+      - checkout
+      - rust_cache:
+          shared_key: "unit-tests"
+      - run:
+          name: Unit tests << parameters.os >>
+          command: ./ci/unit_tests.sh
+
+  integration_tests:
+    parameters:
+      os:
+        type: string
+    executor: << parameters.os >>-executor
+    steps:
+      - checkout
+      - rust_cache:
+          shared_key: "integration-tests"
+      - run:
+          name: Integration tests << parameters.os >>
+          command: ./ci/integration_tests.sh
+
+  build:
+    parameters:
+      os:
+        type: string
+    executor: << parameters.os >>-executor
+    steps:
+      - checkout
+      - rust_cache:
+          shared_key: "build"
+      - run:
+          name: Build << parameters.os >>
+          command: ./ci/build.sh
+      - run:
+          name: Collect results
+          command: ./ci/collect_results.sh
+      - store_artifacts:
+          path: results
+          destination: Node-<< parameters.os >>
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - format
+      - multinode_test:
+          requires:
+            - format
+      - lint:
+          matrix:
+            parameters:
+              os: ["ubuntu", "macos", "windows"]
+          requires:
+            - format
+      - unit_tests:
+          matrix:
+            parameters:
+              os: ["ubuntu", "macos", "windows"]
+          requires:
+            - format
+      - integration_tests:
+          matrix:
+            parameters:
+              os: ["ubuntu", "macos", "windows"]
+          requires:
+            - format
+      - build:
+          matrix:
+            parameters:
+              os: ["ubuntu", "macos", "windows"]
+          requires:
+            - multinode_test
+            - lint
+            - unit_tests
+            - integration_tests
