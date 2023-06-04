@@ -108,8 +108,8 @@ jobs:
       - name: Bump versions
         run: |
           ci/bump_version.sh ${{ inputs.release_version }}
-          git add .
-          git commit -m "Bump Cargo.tomls to ${{ inputs.release_version }}"
+          rm -rf Node-* *.zip
+          git commit -a -m "Version release: ${{ inputs.release_version }}"
           git push
 
       #- name: Sync release to S3 stable
