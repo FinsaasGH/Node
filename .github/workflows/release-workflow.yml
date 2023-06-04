@@ -1,0 +1,121 @@
+name: Release Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+        release_version:
+            description: 'Version number for the release'
+            required: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { name: linux, os: ubuntu-22.04 }
+          - { name: macos, os: macos-12 }
+          - { name: windows, os: windows-2022 }
+    name: Build node on ${{ matrix.target.os }}
+    runs-on: ${{ matrix.target.os }}
+    env:
+      RUSTFLAGS: -D warnings -Anon-snake-case
+      RUST_BACKTRACE: 1
+        
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+        
+      - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: rust-cache
+          shared-key: release
+
+      - name: node build on ${{ matrix.target.os }}
+        working-directory: ${{ github.workspace }}/node
+        run: ./ci/build.sh
+        shell: bash
+
+      - name: masq build on ${{ matrix.target.os }}
+        working-directory: ${{ github.workspace }}/masq
+        run: ./ci/build.sh
+        shell: bash
+
+      - name: masq_lib build on ${{ matrix.target.os }}
+        working-directory: ${{ github.workspace }}/masq_lib
+        run: ./ci/build.sh
+        shell: bash
+
+      - name: automap build on ${{ matrix.target.os }}
+        working-directory: ${{ github.workspace }}/automap
+        run: ./ci/build.sh
+        shell: bash
+
+      - name: dns_utility build on ${{ matrix.target.os }}
+        working-directory: ${{ github.workspace }}/dns_utility
+        run: ./ci/build.sh
+        shell: bash
+
+      - name: Collect results
+        working-directory: ${{ github.workspace }}
+        run: ./ci/collect_results.sh
+        shell: bash
+
+      - name: Publish ${{ matrix.target.os }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: Node-${{ matrix.target.name }}
+          path: results
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+        GITHUB_TOKEN: ${{ github.token }}
+        
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+        
+      - name: Prep env
+        run: |
+          git config --global user.email ${{ secrets.DEV_EMAIL }}
+          git config --global user.name ${{ secrets.DEV_NAME }}
+          gh auth setup-git
+
+      - name: Bump versions
+        run: |
+          ci/bump_version.sh ${{ inputs.release_version }}
+          git add .
+          git commit -m "Bump Cargo.tomls to ${{ inputs.release_version }}"
+          git push
+
+      - uses: actions/download-artifact@v3
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - name: Create Release & Upload Artifacts
+        run: |
+          gh release delete "v${{ inputs.release_version }}" --cleanup-tag --yes
+          gh release create "v${{ inputs.release_version }}" --generate-notes --latest --title "v${{ inputs.release_version }}"
+          gh release upload "v${{ inputs.release_version }}" Node-windows.zip Node-linux.zip Node-macos.zip
+
+      #- name: Sync release to S3 stable
+      #  run: |
+      #    aws s3 sync ./your-artifact s3://${{ env.S3_BUCKET }}/stable
+
+      #- name: Sync release to S3 tagged
+      #  run: |
+      #    aws s3 sync ./your-artifact s3://${{ env.S3_BUCKET }}/v${{ github.run_number }}
+
+      #- name: Sync PR to S3 branch
+      #  if: github.event_name == 'pull_request'
+      #  run: |
+      #    aws s3 sync ./your-artifact s3://${{ env.S3_BUCKET }}/${{ github.head_ref }}
