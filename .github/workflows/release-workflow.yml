@@ -89,13 +89,6 @@ jobs:
           git config --global user.name ${{ secrets.DEV_NAME }}
           gh auth setup-git
 
-      - name: Bump versions
-        run: |
-          ci/bump_version.sh ${{ inputs.release_version }}
-          git add .
-          git commit -m "Bump Cargo.tomls to ${{ inputs.release_version }}"
-          git push
-
       - uses: actions/download-artifact@v3
 
       - name: Display structure of downloaded files
@@ -109,9 +102,15 @@ jobs:
 
       - name: Create Release & Upload Artifacts
         run: |
-          gh release delete "v${{ inputs.release_version }}" --cleanup-tag --yes
           gh release create "v${{ inputs.release_version }}" --generate-notes --latest --title "v${{ inputs.release_version }}"
           gh release upload "v${{ inputs.release_version }}" Node-windows.zip Node-linux.zip Node-macos.zip
+
+      - name: Bump versions
+        run: |
+          ci/bump_version.sh ${{ inputs.release_version }}
+          git add .
+          git commit -m "Bump Cargo.tomls to ${{ inputs.release_version }}"
+          git push
 
       #- name: Sync release to S3 stable
       #  run: |
