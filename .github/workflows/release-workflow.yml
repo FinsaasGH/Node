@@ -101,6 +101,12 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
 
+      - name: Zip artifacts
+        run: |
+          zip Node-windows.zip ./Node-windows/generated/bin/*
+          zip Node-linux.zip ./Node-linux/generated/bin/*
+          zip Node-macos.zip ./Node-macos/generated/bin/*
+
       - name: Create Release & Upload Artifacts
         run: |
           gh release delete "v${{ inputs.release_version }}" --cleanup-tag --yes
