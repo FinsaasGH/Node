@@ -21,16 +21,22 @@ jobs:
     env:
       RUSTFLAGS: -D warnings -Anon-snake-case
       RUST_BACKTRACE: 1
-        
+
     steps:
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-        
+
       - uses: Swatinem/rust-cache@v2
         with:
           prefix-key: rust-cache
-          shared-key: release
+          shared-key: release-${{ matrix.target.name }}
+          cache-directories: |
+            ${{ github.workspace }}/node
+            ${{ github.workspace }}/masq
+            ${{ github.workspace }}/masq_lib
+            ${{ github.workspace }}/automap
+            ${{ github.workspace }}/dns_utility
 
       - name: node build on ${{ matrix.target.os }}
         working-directory: ${{ github.workspace }}/node
@@ -77,12 +83,12 @@ jobs:
         AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
         AWS_REGION: ${{ secrets.AWS_REGION }}
         GITHUB_TOKEN: ${{ github.token }}
-        
+
     steps:
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-        
+
       - name: Prep env
         run: |
           git config --global user.email ${{ secrets.DEV_EMAIL }}
