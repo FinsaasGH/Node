@@ -105,22 +105,21 @@ jobs:
           gh release create "v${{ inputs.release_version }}" --generate-notes --latest --title "v${{ inputs.release_version }}"
           gh release upload "v${{ inputs.release_version }}" Node-windows.zip Node-linux.zip Node-macos.zip
 
+      - name: Sync release to S3 stable
+        run: |
+          aws s3 sync ./Node-windows/generated/bin/* s3://${{ env.S3_BUCKET }}/stable/Node-windows
+          aws s3 sync ./Node-linux/generated/bin/* s3://${{ env.S3_BUCKET }}/stable/Node-linux
+          aws s3 sync ./Node-macos/generated/bin/* s3://${{ env.S3_BUCKET }}/stable/Node-macos
+
+      - name: Sync release to S3 tagged
+        run: |
+          aws s3 sync ./Node-windows/generated/bin/* s3://${{ env.S3_BUCKET }}/v${{ inputs.release_version }}/Node-windows
+          aws s3 sync ./Node-linux/generated/bin/* s3://${{ env.S3_BUCKET }}/v${{ inputs.release_version }}/Node-linux
+          aws s3 sync ./Node-macos/generated/bin/* s3://${{ env.S3_BUCKET }}/v${{ inputs.release_version }}/Node-macos
+
       - name: Bump versions
         run: |
           ci/bump_version.sh ${{ inputs.release_version }}
           rm -rf Node-* *.zip
           git commit -a -m "Version release: ${{ inputs.release_version }}"
           git push
-
-      #- name: Sync release to S3 stable
-      #  run: |
-      #    aws s3 sync ./your-artifact s3://${{ env.S3_BUCKET }}/stable
-
-      #- name: Sync release to S3 tagged
-      #  run: |
-      #    aws s3 sync ./your-artifact s3://${{ env.S3_BUCKET }}/v${{ github.run_number }}
-
-      #- name: Sync PR to S3 branch
-      #  if: github.event_name == 'pull_request'
-      #  run: |
-      #    aws s3 sync ./your-artifact s3://${{ env.S3_BUCKET }}/${{ github.head_ref }}
