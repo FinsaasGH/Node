@@ -96,9 +96,19 @@ jobs:
           gh auth setup-git
 
       - uses: actions/download-artifact@v3
+        id: download
 
       - name: Display structure of downloaded files
         run: ls -R
+
+      - name: Echo download path
+        run: echo ${{steps.download.outputs.download-path}}
+
+      - name: Deploy to S3 and invalidate CloudFront
+        run: |
+          aws s3 sync ${{ steps.download.outputs.download-path }} s3://${{ secrets.AWS_S3_BUCKET }}/MASQ-app/prod --acl private --follow-symlinks --delete --size-only
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.DISTRIBUTION }} --paths '/MASQ-app/*'
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.OTA_DISTRIBUTION }} --paths '/*'
 
       - name: Zip artifacts
         run: |
@@ -113,15 +123,13 @@ jobs:
 
       - name: Sync release to S3 stable
         run: |
-          aws s3 sync ./Node-windows/generated/bin/* s3://${{ env.S3_BUCKET }}/stable/Node-windows
-          aws s3 sync ./Node-linux/generated/bin/* s3://${{ env.S3_BUCKET }}/stable/Node-linux
-          aws s3 sync ./Node-macos/generated/bin/* s3://${{ env.S3_BUCKET }}/stable/Node-macos
+          aws s3 sync ${{ steps.download.outputs.download-path }} s3://${{ secrets.S3_BUCKET }}/stable --acl private --follow-symlinks --delete --size-only
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.DISTRIBUTION }} --paths 'stable/*'
 
       - name: Sync release to S3 tagged
         run: |
-          aws s3 sync ./Node-windows/generated/bin/* s3://${{ env.S3_BUCKET }}/v${{ inputs.release_version }}/Node-windows
-          aws s3 sync ./Node-linux/generated/bin/* s3://${{ env.S3_BUCKET }}/v${{ inputs.release_version }}/Node-linux
-          aws s3 sync ./Node-macos/generated/bin/* s3://${{ env.S3_BUCKET }}/v${{ inputs.release_version }}/Node-macos
+          aws s3 sync ${{ steps.download.outputs.download-path }} s3://${{ env.S3_BUCKET }}/v${{ inputs.release_version }} --acl private --follow-symlinks --delete --size-only
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.DISTRIBUTION }} --paths 'v${{ inputs.release_version }}/*'
 
       - name: Bump versions
         run: |
