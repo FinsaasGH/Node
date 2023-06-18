@@ -80,7 +80,7 @@ jobs:
     env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        AWS_S3_BUCKET: ${{ secrets.S3_BUCKET }}
         AWS_REGION: ${{ secrets.AWS_REGION }}
         GITHUB_TOKEN: ${{ github.token }}
 
@@ -106,7 +106,7 @@ jobs:
 
       - name: Deploy to S3 and invalidate CloudFront
         run: |
-          aws s3 sync ${{ steps.download.outputs.download-path }} s3://${{ secrets.AWS_S3_BUCKET }}/MASQ-app/prod --acl private --follow-symlinks --delete --size-only
+          aws s3 sync ${{ steps.download.outputs.download-path }} s3://${{ secrets.S3_BUCKET }}/MASQ-app/prod --acl private --follow-symlinks --delete --size-only
           aws cloudfront create-invalidation --distribution-id ${{ secrets.DISTRIBUTION }} --paths '/MASQ-app/*'
           aws cloudfront create-invalidation --distribution-id ${{ secrets.OTA_DISTRIBUTION }} --paths '/*'
 
